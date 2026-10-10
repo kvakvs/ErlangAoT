@@ -167,177 +167,48 @@ Windows x64 Debug 124/124 CTests and 258 quality units. Descriptors use ABI
 revision 4; the revision-2 failure channel is unchanged. Normal builds and tests
 need no OTP.
 
-## Plan 11 (steps 1–22, 2026-10-03–05, Windows x64)
+## Plan 11 (steps 1–68, 2026-10-03–10)
 
-Compact per-step record: [11-plan.md](11-plan.md#step-1).
+Commits per step: [11-plan.md](11-plan.md#completed-steps); full step text in
+Git. Contracts in the linked `docs/`. Windows x64 unless noted.
 
-- **Baseline (1–2):** `maint-29` unchanged at `21776803`; fast/full test modes;
-  changed-scope quality and formatting; `docs/` reduced to 15 notes; six
-  OTP-goldened program fixtures with a feature map.
-- **Executables (3–8):** entry/argv/exit contract (`docs/executables.md`),
-  escript mode, `~w`/`erlang:display/1` printing, startup object
-  (`CLAUSE_main_v1`) and `erlang:halt/0,1`, Clang linking for positional
-  and project builds with staged all-or-nothing publication, and the executable
-  golden runner (`tests/fixtures/executables/`). Phase B close: full 138/138
-  CTests, 272 quality units.
-- **Classic heap (8A–8I, phase C closed):** contract `docs/runtime-heap.md`; heap and off-heap
-  binary cells with a per-process off-heap list; parseable areas with walker and
-  `verify()`; admission by owned range and header shape (no object index);
-  host `Term` as raw word with lifetime and collection count; segmented process
-  root stack; one heap block per process plus heap fragments; full-sweep Cheney
-  collector on explicit host request with ERTS sizing. Per-context footprint
-  fell from 66 KB to 2.4 KB; per-cell side metadata from 24 MB to none after a
-  collection (`docs/runtime-heap.md#measurements`).
-- **Control flow (9):** `begin`/`end` and `case` with ordered clauses, guards,
-  OTP export/unsafe scoping and `{case_clause, V}`; executable goldens
-  `case_select`, `case_scope`; OTP-classed binding rows in the bindings corpus.
-- **`if` (10):** guard-only clauses share the `case` scoping and joins;
-  exhaustion raises `if_clause`; golden `if_select`, four `if_*` binding rows.
-- **Raise (11):** `error/1,2,3`, `exit/1`, `throw/1` (qualified or auto-imported)
-  raise through `CLAUSE_raise_v2` with `raised_*` reasons; startup reports
-  `uncaught exception <class>: <reason>`; golden `raise_classes`.
-- **`catch Expr` (12):** failures inside reach a handler that calls
-  `CLAUSE_catch_v1` (thrown term, `{'EXIT', R}`, `{'EXIT', {R, []}}`);
-  halts and runtime failures pass through; inner bindings unsafe afterwards;
-  golden `catch_values`, four `catch_*` binding rows; `nowarn_*` compile options.
-- **`try ... of ... catch` (13):** the body's handler takes `{Class, Reason}`
-  via `CLAUSE_exception_v1`; catch clauses match class (default `throw`),
-  reason and guard; unmatched re-raise via `CLAUSE_reraise_v1`; `of` clauses
-  raise `{try_clause, V}`; everything bound inside is unsafe afterwards; golden
-  `try_catch`, six `try_*` binding rows. Catch class/stacktrace are AST
-  expressions.
-- **`try ... after` (14):** an after protection encloses body and clauses; the
-  normal path runs the after body once, the after handler takes the exception,
-  runs a second copy and re-raises; golden `try_after`, native
-  `codegen_after_fault_O0/O2` (budget failure in the after body), three
-  `try_after*` binding rows.
-- **Stack traces and `erlang:raise/3` (15):** root frames carry a
-  `FrameDescriptor` (`CLAUSE_roots_enter_v5`); an Erlang exception copies
-  the innermost 8 named frames, built into `[{M, F, Arity, []}]` only for
-  `catch`, handlers and reports; `Class:Reason:Stack` binds it
-  (`CLAUSE_exception_v2`), re-raise keeps it (`CLAUSE_reraise_v2`, also
-  `raise/3` with BEAM's stack validation and `badarg` result), `error/2,3`
-  show their argument list (`CLAUSE_error_v1`); `stacktrace_bound`/
-  `stacktrace_guard` lint, `get_stacktrace/0` rejected; golden `stack_traces`,
-  three `try_stack*` binding rows. The `exceptions` capability is implemented.
-- **`maybe` (16):** each `?=` is a match whose mismatch edge leaves for the
-  maybe's exit with the unmatched value; without `else` that value is the
-  result, otherwise `else` clauses select like `case` clauses and raise
-  `{else_clause, V}` (`ErrorReason::else_clause = 15`); bindings follow OTP
-  (nothing exported, `else` sees body names unsafe); golden `maybe_else`, four
-  `maybe_*` binding rows, feature-disabled source rejected. The `pattern
-  matching` capability is implemented.
-- **Execution model decision (17):** `docs/execution-model.md` fixes explicit
-  frames on a flat moving process stack, X-register arguments, entry plus
-  resume-switch body per function, `musttail` transfers (trampoline
-  fallback), entry reductions for yield and unwinding to handler frames;
-  prototype `tests/prototypes/execution_model/` compared native calls and
-  LLVM coroutines and checked all required targets.
-- **List comprehensions (21):** every generator is a loop in the function body
-  with its cursor and the reversed accumulator in frame term slots (constant
-  stack), reversed once by `ContainerConstruction::reverse`; generator patterns
-  shadow, relaxed ones skip, strict ones raise `{badmatch, E}`, zip groups run
-  in step and raise `{bad_generators, Inputs}`, non-lists `{bad_generator, T}`;
-  guard-test filters reject like guards, others raise `{bad_filter, V}`
-  (`ErrorReason` 16-18); golden `list_comprehensions` (100k-element inputs).
-- **Binary and map comprehensions (22):** bitstring generators match a prefix
-  (plan `GeneratorPattern::element` adds a tail segment) and skip rejected
-  elements with OTP's skip pattern (`skip`: values ignored, floats as
-  integers); map generators walk `key_at`/`value_at` positions; producers
-  accumulate like lists and finish with `BitOperation::concat` or
-  `MapOperation::from_list`; zip payloads show OTP's map iterator chain
-  (`MapOperation::iterator`). Golden `bit_map_comprehensions` covers every
-  generator/producer combination. Phase E closed.
-
-## Plan 11 (steps 23–68, 2026-10-05–10)
-
-Commits per step: [11-plan.md](11-plan.md#completed-steps). Contracts in the
-linked `docs/`.
-
-- **Memory (23–28, phase F):** root inventory for frames, registers and the
-  failure channel; collection triggers and safepoints in generated code;
-  collection from generated code; heap exhaustion as `out_of_memory` with no
-  default cap, an optional runtime-wide limit and `--max-heap`/`--max-stack`/
-  `--max-memory`; list length, map size and key-work caps removed, tuple arity
-  and big-integer limits matched to OTP; sharing-preserving graph copies
-  between heaps ([runtime-heap](../docs/runtime-heap.md)).
-- **Records and function values (29–35, phase G):** record updates,
-  `record_info/2`, native/qualified/anonymous native records (31A–31E); funs
-  without and with captures, named funs, dynamic calls and `apply`.
-- **Builtins (36–41, phase H):** generic production builtin bridge,
-  term-access and conversion families, project-owned `lists`/`maps` subset,
-  console output through `io`, typed native callables.
-- **Processes (42–53, phase I):** pid/reference identities, cooperative
-  executor with interruptible builtins, exit reasons and crash reports, signal
-  inbox and send, selective receive and `after` timeouts, links, exit signals
-  and `trap_exit`, monitors, registered names, collection with mailboxes and
-  suspended processes, identity guards.
-- **Multi-worker scheduling (54–57, phase J):** synchronized atom table and
-  code server, several scheduler workers, cross-worker wakeups, timers and
-  shutdown.
-- **Ports (57A–57G3, phase J2):** port contract, identities and table, I/O
-  poller, subprocess, file, standard I/O and socket ports, one event-driven
-  I/O thread, port tasks on scheduler workers, busy-port suspension and
-  bounded input ([ports](../docs/ports.md)).
-- **End-to-end (58, phase K):** the six program fixtures run through their
-  manifests and match OTP at O0/O2 on 1 and 4 workers.
-- **Inference (58A–58N3, phase L):** fact domain, literal/operator/container/
-  fun facts, caller-joined inputs, narrowing by patterns, guards, uses and
-  integer comparisons, entry/success domains, specification contradictions
-  as errors, per-clause function types, call selection, per-call
-  re-analysis, and dependent facts of `case`/`if`/`try ... of`
-  ([semantic](../docs/semantic.md#inference)); `--print-types` shows them.
-- **Tooling (59–62B, phase L):** inferred proofs remove tag/shape checks at
-  O2, source-level debug info (`-g`), opt-in profiling (`--profile`), LTO
-  (`--lto`), hash-indexed code-server lookups, receive timers in a timer
-  wheel.
-- **Validation (63–65, 67–68, phase M):** Linux x86-64 full gate (WSL2);
-  32-bit runtime on Windows x86 and Linux i386 with cross-linked goldens;
-  arm64/armhf under qemu-user; ASan/UBSan/LSan and TSan clean on Linux after
-  fixing a shutdown use-after-free and a lock-order inversion
-  ([validation](../docs/validation.md)).
+| Steps | Delivered |
+| --- | --- |
+| 1–2 (A) | `maint-29` pin `21776803`; fast/full test modes; changed-scope quality; six OTP-goldened program fixtures with a feature map. |
+| 3–8 (B) | Entry/argv/exit contract ([executables](../docs/executables.md)), escript mode, `erlang:display/1`, startup object and `halt/0,1`, Clang linking of positional and project builds with staged publication, executable golden runner. Phase close: 138/138 CTests. |
+| 8A–8I (C) | ERTS-style heap ([runtime-heap](../docs/runtime-heap.md)): off-heap binary list, parseable areas with walker, header admission, raw-word host terms, one heap block plus fragments, Cheney collector with ERTS sizing; per-context footprint 66 KB → 2.4 KB. |
+| 9–16 (D) | `begin`/`case`/`if` with OTP scoping and `case_clause`/`if_clause`; `error`/`exit`/`throw`; `catch`; `try ... of ... catch` and `after`; stack traces (8 frames), `Class:Reason:Stack`, `raise/3`; `maybe` with `else_clause`. |
+| 17–22 (E) | Execution model ([execution-model](../docs/execution-model.md)): explicit frames on a flat process stack, `musttail` transfers; recursive call graphs, proper tail calls, deep non-tail recursion; list, binary and map comprehensions with OTP generator/filter errors. |
+| 23–28 (F) | Roots for frames, registers and the failure channel; safepoints and collection from generated code; `out_of_memory` without default cap, optional `--max-heap`/`--max-stack`/`--max-memory`; list/map caps removed, tuple arity and bignum limits as OTP; sharing-preserving copies between heaps. |
+| 29–35 (G) | Record updates, `record_info/2`, local/qualified/anonymous native records (31A–31E); funs with and without captures, named funs, dynamic calls and `apply`. |
+| 36–41 (H) | Production builtin bridge; term-access and conversion families; project-owned `lists`/`maps` subsets; `io:format`/`put_chars`; typed native callables. |
+| 42–53 (I) | Pid/reference identities; cooperative executor, interruptible builtins (43A); exits and crash reports; signal inbox and send; selective receive and `after`; links, `trap_exit`, monitors, registered names; collection with mailboxes; identity guards; port scope decision (superseded by J2). |
+| 54–57 (J) | Synchronized atom table and code server; several scheduler workers; cross-worker wakeups, timers, shutdown. |
+| 57A–57G3 (J2) | Ports ([ports](../docs/ports.md)): identities and table, I/O poller, subprocess, file, standard I/O and socket ports, one event-driven I/O thread, port tasks on workers, busy-port suspension. |
+| 58 (K) | Six program fixtures run through their manifests and match OTP at O0/O2 on 1 and 4 workers. |
+| 58A–58N3 (L) | Inference ([semantic](../docs/semantic.md#inference)): fact domain, literal/operator/container/fun facts, caller inputs, narrowing by patterns, guards, uses and integer comparisons, entry/success domains, spec contradictions as errors, per-clause function types, call selection, per-call re-analysis, dependent facts of `case`/`if`/`try ... of`; `--print-types`. |
+| 59–62B (L) | O2 proofs remove tag/shape checks; debug info (`-g`); profiling (`--profile`); LTO (`--lto`); hashed code-server lookups; timer wheel. Phase close: 235/235 full CTests, `check-quality-all` clean. |
+| 63–65, 67–68 (M) | Linux x86-64 full gate (WSL2); 32-bit runtime on Windows x86 and Linux i386 with cross-linked goldens; arm64/armhf under qemu-user; ASan/UBSan/LSan and TSan clean on Linux after fixing a shutdown use-after-free and a lock-order inversion ([validation](../docs/validation.md)). |
 
 <a id="outstanding-work-to-finish"></a>
 
 ## Outstanding work to finish
 
 [The backlog](01-todo.md) expands each gap; [plan 11](11-plan.md) orders it.
+Done: production executables, matching and guards, admitted terms, process
+heap and collection, graph copying, the Erlang semantics above, identities
+and atoms, processes, scheduling and ports, runtime services, tooling and
+inference, sanitizers.
 
-- [x] **Production executables:** startup, entry policy and Clang linking for
-  positional and project builds; golden runner (plan 11 steps 3–8).
-- [x] **Scoped matching and guards:** ordered clauses, body matches, bindings,
-  grouped/strict/lazy guards and the admitted service catalog.
-- [x] **Admitted terms:** atoms, integers, floats, tuples/lists/strings, maps,
-  bitstrings and ordinary records with checked construction, access,
-  comparison and fault cleanup.
-- [x] **Parseable process heap:** ERTS word layout, off-heap binaries, header
-  admission, raw-word host terms, root stack, heap block plus fragments,
-  copying collector on host request (8A–8I).
-- [x] **Collection and copying:** generated-code safepoints, graph copying
-  between heaps, mailbox roots (plan 11 phase F, step 51).
-- [x] **More Erlang semantics:** maybe, comprehensions, exceptions and
-  handlers, recursion and tail calls (plan 11 phases D and E); record updates,
-  `record_info/2` and native records (steps 29–31E); function values,
-  closures, named funs and dynamic calls (steps 32–35); builtins as values and
-  through dynamic calls via the production builtin bridge (step 36).
-- [x] **Identities and atoms:** pid/port/reference identities, synchronized
-  atom table (steps 42, 54, 57B); atom collection stays a scope decision (D02).
-- [x] **Processes and scheduling:** cooperative execution, reductions,
-  workers, signals, send, selective receive, timers, ports (phases I, J, J2).
-- [x] **Runtime services:** builtin families, typed callables, concurrent and
-  indexed code server (steps 36–41, 55, 62A); dynamic loading is D01.
-- [x] **Tooling:** source-driven specialization, debug info, profiling, LTO,
-  precise inference (steps 58A–62B).
-- [ ] **Native platform validation:** Linux x86-64, 32-bit x86 and ARM done
-  (steps 63–65, ARM under emulation); macOS Apple Silicon open (step 66).
-- [x] **Sanitizers:** compiler/frontend ASan/UBSan/LSan and runtime TSan
-  (steps 67–68).
+- [ ] **Native platform validation:** macOS Apple Silicon (step 66) and native
+  ARM hardware; Linux x86-64, 32-bit x86 and ARM under emulation done.
 - [ ] **OTP compatibility:** upstream Common Test suites and wider
   differential comparisons (step 69).
 - [ ] **Test migration closure:** retire adapters only after equivalent public
   coverage (step 70).
 
-Deferred, not required: public interchange (D04), stage readers (D05), C/FFI
-(D06), project-schema extensions (D07). Every change keeps formatting,
-behavioral tests and the fresh combined Debug quality gate without weakened
-thresholds or suppressions.
+Deferred, not required: dynamic modules (D01), atom collection (D02),
+behavior-changing attributes (D03), public interchange (D04), stage readers
+(D05), C/FFI (D06), project-schema extensions (D07). Every change keeps
+formatting, behavioral tests and the fresh combined Debug quality gate without
+weakened thresholds or suppressions.
