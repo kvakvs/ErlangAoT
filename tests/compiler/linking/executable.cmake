@@ -61,7 +61,7 @@ compile(project 0 "^$" --project project.toml -o project)
 run(project 0 "[\"x\"]\n" x)
 compile(project_entry 0 "^$" --project project.toml --target app --entry app -O2 -o "sub dir/project")
 run("sub dir/project" 3 "" halt)
-compile(project_failure 1 "\\[target app\\]: error: runtime library not found"
+compile(project_failure 1 "\\[target app\\]:\nerror: runtime library not found"
     --project project.toml -o kept.bin --runtime-library absent.lib)
 
 # Every failure keeps an existing output byte-for-byte and leaves no staging directory.

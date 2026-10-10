@@ -32,8 +32,7 @@ int run(const Request &request, const PlanOptions &options, const TargetExecutor
         auto settings = options;
         settings.selectors = request.targets;
         const auto invocation = prepare(manifest, settings);
-        return execute(invocation, executor,
-                       [&](const std::string_view message) { diagnostics << "clau: " << message << '\n'; });
+        return execute(invocation, executor, [&](const std::string_view message) { diagnostics << message << '\n'; });
     } catch (const Failure &error) {
         diagnostics << "clau: error: " << error.what() << '\n';
         return error.detail.exit_code;

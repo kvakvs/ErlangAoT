@@ -77,7 +77,10 @@ Each selected target is a separate compilation batch with its own preprocessing
 sessions. Planning (decode, select, discover, check output collisions) finishes
 before any source runs; execution then processes targets/files in order and
 latches failures. Payload output goes to stdout in target/file order without
-banners; context and diagnostics go to stderr.
+banners; context and diagnostics go to stderr. A target with diagnostics is
+named once, on a `<manifest> [target <name>]:` line before its first one; the
+diagnostics themselves (`error: file:line:col: message`) carry no tool or
+target prefix.
 
 ```sh
 ./build/debug/bin/clau --parse-check --project examples/project/project.toml

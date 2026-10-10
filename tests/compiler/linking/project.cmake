@@ -75,7 +75,7 @@ run(proj/build/library 0 "{library,[]}\n")
 
 # Linker options apply to every linked target without -o; failures publish nothing.
 clean()
-compile(runtime_option 1 "\\[target hello\\]: error: runtime library not found.*\\[target tool\\]: error: runtime library not found"
+compile(runtime_option 1 "\\[target hello\\]:\nerror: runtime library not found.*\\[target tool\\]:\nerror: runtime library not found"
     --project proj/project.toml --runtime-library absent.lib)
 expect_outputs(runtime_option)
 compile(linker_usage 2 "--linker and --runtime-library require --output or a linking project build"
@@ -93,7 +93,7 @@ sources = ["tool.erl"]
 entry = "tool:run"
 output = "tool.erl"
 ]=])
-compile(late_failure 1 "\\[target alias\\]: error: artifact destination aliases an input: [^\n]*tool\\.erl"
+compile(late_failure 1 "\\[target alias\\]:\nerror: artifact destination aliases an input: [^\n]*tool\\.erl"
     --project proj/late.toml)
 file(READ "${proj}/build/hello${HOST_SUFFIX}" contents)
 if(NOT contents STREQUAL "old\n")

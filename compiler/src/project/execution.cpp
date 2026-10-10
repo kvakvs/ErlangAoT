@@ -1,13 +1,19 @@
 #include "execution.hpp"
 #include "diagnostics.hpp"
+#include <utility>
 
 namespace clause::project {
 namespace {
-// Attach project/target context; the shared frontend retains each diagnostic's source.
+// Name the project and target once, on a line of their own before the target's first diagnostic; the shared
+// frontend retains each diagnostic's source.
 bool process(const Invocation &invocation, const PlannedTarget &target, const TargetExecutor &executor,
              const MessageSink &diagnostics) {
+    bool named = false;
     const MessageSink report = [&](const std::string_view message) {
-        diagnostics(render({{invocation.file, "", target.name, 0, 0}, std::string(message), 1}));
+        if (!std::exchange(named, true)) {
+            diagnostics(where({invocation.file, "", target.name, 0, 0}) + ':');
+        }
+        diagnostics(message);
     };
     try {
         return executor(invocation, target, report);

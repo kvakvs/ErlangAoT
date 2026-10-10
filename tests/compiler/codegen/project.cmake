@@ -38,8 +38,8 @@ if(NOT EXISTS "${TEST_DIR}/outside/explicit/clausev1_74776f__0/clausev1_73686172
     message(FATAL_ERROR "Explicit artifact root/target selection is incorrect")
 endif()
 # Without --emit, targets with an output link; no module exports main/1, so nothing is written.
-check(1 "\\[target two\\]: error: no entry point" --target two -O0)
-check(1 "\\[target two\\]: error: no entry point" --target two -O2 --no-type-specialization)
+check(1 "\\[target two\\]:\nerror: no entry point" --target two -O0)
+check(1 "\\[target two\\]:\nerror: no entry point" --target two -O2 --no-type-specialization)
 if(EXISTS "${TEST_DIR}/outside/build" OR EXISTS "${TEST_DIR}/project/reserved")
     message(FATAL_ERROR "Failed linking wrote executable outputs")
 endif()

@@ -49,7 +49,7 @@ file(WRITE "${project}/failure.toml" "${failed}")
 check(aggregate 1 "IntegerLiteral value=202" "target app.*injected_app_failure" "${project}/failure.toml" --print-ast)
 file(WRITE "${project}/build/app" "preserve executable\n")
 # Targets with an output link; without main/1 both fail before publication and keep existing files.
-check(default_pipeline 1 "^$" "target app\\]: error: no entry point.*target tests\\]: error: no entry point" "${project}/project.toml")
+check(default_pipeline 1 "^$" "target app\\]:\nerror: no entry point.*target tests\\]:\nerror: no entry point" "${project}/project.toml")
 check(check_preserves 0 "^$" "^$" "${project}/project.toml" --parse-check)
 file(READ "${project}/build/app" after)
 if(NOT after STREQUAL "preserve executable\n" OR EXISTS "${project}/build/tests")
