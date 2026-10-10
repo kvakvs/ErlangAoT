@@ -232,14 +232,27 @@ semantic_case(record_info_guard "-module(a). -record(r, {a}). f(X) when record_i
     "illegal guard call")
 semantic_case(record_info_defined "-module(a). -export([record_info/2]). record_info(A, B) -> {A, B}." 1
     "function record_info/2 already defined")
-semantic_case(compile_option "-module(a). -compile(export_all). f() -> 1." 1 "behavior-changing attributes")
-semantic_case(transform "-module(a). -compile({parse_transform,x}). f() -> 1." 1 "behavior-changing attributes")
+semantic_case(compile_option "-module(a). -compile(export_all). f() -> 1." 1
+    "behavior-changing attributes\] notimpl .*-compile option export_all")
+semantic_case(transform "-module(a). -compile([debug_info, {parse_transform,x}]). f() -> 1." 1
+    "-compile option {parse_transform, x}")
 semantic_case(compile_nowarn "-module(a). -compile([nowarn_deprecated_catch, nowarn_unused_function]). f() -> 1." 0 "^$")
-semantic_case(on_load "-module(a). -on_load(f/0). f() -> 1." 1 "behavior-changing attributes")
+# Optimization, debug and reporting hints are accepted and ignored (plan 11 step 65C).
+semantic_case(compile_hints
+    "-module(a). -compile({inline,[f/0]}). -compile([inline, debug_info, {inline_size,24}, warn_unused_vars, {nowarn_unused_function,[{f,0}]}, report]). f() -> 1."
+    0 "^$")
+semantic_case(on_load "-module(a). -on_load(f/0). f() -> 1." 1 "-on_load attribute")
 semantic_case(custom_attribute "-module(a). -custom(1). f() -> 1." 0 "^$")
-semantic_case(nifs "-module(a). -nifs([f/0]). f() -> 1." 1 "behavior-changing attributes")
-semantic_case(parameterized "-module(a, [X]). f() -> 1." 1 "behavior-changing attributes")
-semantic_case(import "-module(a). -import(b,[f/0]). g() -> 1." 1 "behavior-changing attributes")
+semantic_case(nifs "-module(a). -nifs([f/0]). f() -> 1." 1 "-nifs attribute")
+semantic_case(parameterized "-module(a, [X]). f() -> 1." 1 "-module parameters")
+# An import makes local calls remote; unused imports need no module (plan 11 step 65C).
+semantic_case(import "-module(a). -import(b,[f/0]). g() -> 1." 0 "^$")
+semantic_case(import_unknown "-module(a). -export([g/0]). -import(b,[f/0]). g() -> f()." 1 "unknown module b")
+semantic_case(import_library "-module(a). -export([g/1]). -import(lists,[reverse/1]). g(X) -> reverse(X)." 0 "^$")
+semantic_case(import_builtin "-module(a). -export([g/0]). -import(io,[format/2]). g() -> format(\"~p\", [1])." 0 "^$")
+semantic_case(import_erlang "-module(a). -export([g/1]). -import(erlang,[display/1]). g(X) -> display(X)." 0 "^$")
+semantic_case(import_guard "-module(a). -export([g/1]). -import(lists,[member/2]). g(X) when member(X, [a]) -> X." 1
+    "illegal guard call")
 semantic_case(unused "-module(a). -export([f/0]). f() -> 1. unused() -> fun erlang:apply/2." 1 "dynamic calls")
 semantic_case(bignum "-module(a). f() -> 99999999999999999999999999999." 0 "^$")
 semantic_case(negative_bignum "-module(a). f() -> -99999999999999999999999999999." 0 "^$")

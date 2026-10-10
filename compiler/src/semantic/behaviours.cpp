@@ -173,32 +173,6 @@ struct Checker {
                    std::map<FunctionKey, std::size_t> &first) const;
 };
 
-// Collect the atoms of one -compile value; nested lists flatten as compile's options do.
-void compile_options(const ast::Module &syntax, const ast::TermId &root, std::set<std::u32string> &result) {
-    std::vector<ast::TermId> pending{root};
-    while (!pending.empty()) {
-        const auto &value = syntax.term(pending.back()).value;
-        pending.pop_back();
-        if (const auto *list = std::get_if<ast::TermList>(&value)) {
-            pending.insert(pending.end(), list->elements.rbegin(), list->elements.rend());
-        } else if (const auto *atom = std::get_if<ast::Atom>(&value); atom && atom->name.starts_with(U"nowarn_")) {
-            result.insert(atom->name.substr(7));
-        }
-    }
-}
-
-// The warning categories the module's -compile attributes turn off; Clause admits no option turning one back on.
-std::set<std::u32string> suppressed(const ast::Module &syntax) {
-    std::set<std::u32string> result;
-    for (const auto &id : syntax.forms()) {
-        const auto *attribute = std::get_if<ast::GenericAttribute>(&syntax.form(id).value);
-        if (attribute && attribute->name.name == U"compile") {
-            compile_options(syntax, attribute->value, result);
-        }
-    }
-    return result;
-}
-
 // The -behaviour/-behavior attributes of a module, in source order.
 std::vector<Behaviour> behaviours(const ast::Module &syntax) {
     std::vector<Behaviour> result;
@@ -315,7 +289,7 @@ void Checker::conflicts(const std::vector<Behaviour> &behaviours, const std::siz
 
 // Check one module's behaviours; diagnostics of one attribute come in OTP's sorted order.
 void check_module(const Module &module, const std::map<std::u32string, const Module *> &batch, const Reporter &out) {
-    Checker checker{module, {}, suppressed(*module.syntax), batch, out};
+    Checker checker{module, {}, disabled_warnings(*module.syntax), batch, out};
     if (!checker.enabled(U"behaviours")) {
         return;
     }

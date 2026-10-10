@@ -40,11 +40,16 @@ forms, `doc`/`moduledoc`, `behaviour`/`behavior` ([behaviours](semantic.md#behav
 any informational attribute (`vsn`, `author`, `copyright`, `deprecated`,
 `dialyzer`, user-defined `-name(Term)`; kept for
 [`module_info(attributes)`](semantic.md#predefined-functions)),
-`-compile` with `{no_auto_import, ...}` or warning-only `nowarn_*` options (for
-example `nowarn_deprecated_catch`) and `-import` of `erlang` guard BIFs.
-`on_load`, `nifs`, parse transforms, other `compile` options, other `-import`
-lists and parameterized modules are rejected. Every module gets
-`module_info/0,1`.
+`-import(Module, [F/A, ...])` ([imports](semantic.md#imports)) and `-compile`
+with options that change nothing Clause emits: `{no_auto_import, ...}`, warning
+options (`nowarn_*`, `warn_*`, `{nowarn_unused_function, [...]}`) and
+optimization, debug and reporting hints (`inline`, `{inline, [F/A]}`,
+`{inline_size, N}`, `{inline_effort, N}`, `inline_list_funcs`, `debug_info`,
+`deterministic`, `report*`, `verbose`, ...). `on_load`, `nifs`, parse
+transforms, `export_all`, other `compile` options and parameterized modules are
+rejected; the diagnostic names them, for example
+`[behavior-changing attributes] notimpl [module="m" operation="-compile option {parse_transform, x}"]`.
+Every module gets `module_info/0,1`.
 Sources starting with `#!` follow [escript rules](executables.md#escripts)
 (implicit module and `main/1` export, `-mode` accepted).
 Type/spec forms are analyzed but never change generated code. Syntax-only modes

@@ -62,6 +62,25 @@ Plan 11 step 65A, following OTP's
 - Evidence: `tests/fixtures/lint` (OTP-generated diagnostics, CTest
   `lint_diagnostics`), `executables_behaviours`, `semantic` CLI cases.
 
+## Imports
+
+Plan 11 step 65C, following `erl_lint`'s import rules.
+
+- `-import(Module, [F/A, ...])` makes a local call `F(...)` the remote call
+  `Module:F(...)`: the module must be in the batch (a library module joins it
+  like a literal call) and export the function, or be a builtin module
+  (`-import(io, [format/2])`, `-import(erlang, [display/1])`). An import
+  takes precedence over an auto-imported BIF of the same name.
+- Errors with OTP's text: `function F/A already imported from M` (the whole
+  attribute is then ignored), `defining imported function F/A`,
+  `creating a fun from imported name F/A is not allowed`. An imported
+  function in a guard is an illegal guard call (except erlang guard BIFs).
+- Warning `import directive overrides auto-imported BIF F/A -- ...` unless
+  `no_auto_import` names it or `nowarn_bif_clash` is given; Clause knows the
+  auto-imported BIFs it implements.
+- Evidence: `executables_imports`, lint cases `imports_conflicts`,
+  `imports_fun`, `imports_bif`, semantic CLI cases.
+
 ## Predefined functions
 
 Plan 11 step 65B, following OTP's

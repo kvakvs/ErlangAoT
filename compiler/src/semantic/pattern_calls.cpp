@@ -1,5 +1,6 @@
 #include "../preprocessor/expression.hpp"
 #include "capabilities.hpp"
+#include "imports.hpp"
 #include "pattern_state.hpp"
 #include "services.hpp"
 #include <set>
@@ -282,6 +283,17 @@ std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const as
 }
 } // namespace
 
+bool auto_imported_bif(const FunctionKey &key) { return guard_bif(key.name, key.arity) || auto_imported(key); }
+
+std::optional<std::pair<FunctionKey, std::size_t>> imported_builtin(const Module &module,
+                                                                    const ast::CallExpression &call) {
+    const auto *name = std::get_if<ast::Atom>(&module.syntax->expression(ungroup(*module.syntax, call.target)).value);
+    FunctionKey key{name ? name->name : U"", call.arguments.size()};
+    const auto *owner = name ? import_owner(module, key) : nullptr;
+    const auto builtin = owner && *owner != U"erlang" ? bridge_builtin(*owner, key) : std::nullopt;
+    return builtin ? std::optional{std::pair{std::move(key), *builtin}} : std::nullopt;
+}
+
 std::optional<FunctionKey> builtin_fun(BindingAnalysis &state, const ast::ExprId &id,
                                        const ast::LocalFunReference &reference) {
     const auto count = arity(reference.arity);
@@ -322,8 +334,13 @@ std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprI
     if (!name) {
         return {};
     }
-    // A local definition or no_auto_import keeps the unqualified name an ordinary local call.
-    const FunctionKey key{name->name, call.arguments.size()};
+    // A local definition or no_auto_import keeps the unqualified name an ordinary local call; -import of erlang
+    // also reaches the builtins callable only qualified (display/1).
+    FunctionKey key{name->name, call.arguments.size()};
+    const auto *owner = import_owner(state.module, key);
+    if (owner && *owner == U"erlang" && bridge_builtin(key)) {
+        return key;
+    }
     const bool imported = auto_imported(key) && !state.module.lookup.contains(key) && auto_import(state, id, key);
     return imported ? std::optional{key} : std::nullopt;
 }

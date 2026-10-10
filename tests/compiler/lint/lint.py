@@ -50,9 +50,14 @@ def observe(tool, case, golden):
     """Clause's exit status and diagnostics for the case's files."""
     result = subprocess.run([tool, *golden['files']], cwd=CASES / case, capture_output=True, encoding='utf8',
                             timeout=300, check=False)
-    found = [DIAGNOSTIC.match(line) for line in result.stderr.splitlines()]
-    diagnostics = [{'file': m[2], 'line': int(m[3]), 'column': int(m[4]), 'severity': m[1], 'message': m[5]}
-                   for m in found if m]
+    diagnostics = []
+    for line in result.stderr.splitlines():
+        if match := DIAGNOSTIC.match(line):
+            diagnostics.append({'file': match[2], 'line': int(match[3]), 'column': int(match[4]),
+                                'severity': match[1], 'message': match[5]})
+        elif diagnostics and line and not line.startswith(' '):
+            # A message of several lines continues on the next ones, as OTP's do.
+            diagnostics[-1]['message'] += '\n' + line
     return result.returncode, diagnostics
 
 

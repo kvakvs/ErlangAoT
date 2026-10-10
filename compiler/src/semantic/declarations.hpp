@@ -144,6 +144,8 @@ struct Module {
     // Native records listed in -export_record, and record names -import_record maps to their modules.
     std::set<std::u32string> exported_records = {};
     std::map<std::u32string, std::u32string> imported_records = {};
+    // The functions -import makes callable without their module, mapped to that module.
+    std::map<FunctionKey, std::u32string> imports_ = {};
     // The function values this module creates, one entry per distinct fun F/A or fun M:F/A, and the entry each
     // fun expression creates.
     std::vector<FunEntry> funs = {};
@@ -179,6 +181,10 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
 bool predefined_form(const Module &module, const ast::FormId &id);
 // An attribute's name token, where erl_lint locates attribute diagnostics: `export` of -export([...]).
 const ast::TokenOrigin &attribute_name(const ast::Module &syntax, const ast::Form &form);
+// The options of every -compile attribute in source order, nested lists flattened as compile's options are.
+std::vector<ast::TermId> compile_options(const ast::Module &syntax);
+// The warning categories -compile(nowarn_Category) turns off; Clause admits no option turning one back on.
+std::set<std::u32string> disabled_warnings(const ast::Module &syntax);
 // Whether the module's syntax defines the function itself.
 bool defines_function(const ast::Module &syntax, const FunctionKey &key);
 // The index of a function the module's own source may name; OTP's predefined behaviour_info/1 is not one.

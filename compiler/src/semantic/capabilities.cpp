@@ -8,7 +8,7 @@
 
 namespace clause::semantic {
 namespace {
-// Attributes that would change semantics (on_load, nifs, parse transforms, imports) stay rejected.
+// Attributes that would change semantics (on_load, nifs, parse transforms, module parameters) stay rejected.
 struct FormCapability {
     std::string_view operator()(const ast::ModuleAttribute &value) const {
         return value.parameters ? "behavior-changing attributes" : "";
@@ -26,7 +26,7 @@ struct FormCapability {
 
     std::string_view operator()(const ast::DocumentationAttribute &) const { return {}; }
 
-    std::string_view operator()(const ast::ImportAttribute &) const { return "behavior-changing attributes"; }
+    std::string_view operator()(const ast::ImportAttribute &) const { return {}; }
 
     std::string_view operator()(const ast::ImportRecordAttribute &) const { return {}; }
 
@@ -243,8 +243,9 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
     for (const auto &id : module.syntax->forms()) {
         const auto &form = module.syntax->form(id);
         const auto reason = std::visit(FormCapability{}, form.value);
-        if (!reason.empty() && !service_metadata(*module.syntax, form.value)) {
-            unsupported(module, form.source, reason, out);
+        const auto rejected = reason.empty() ? std::nullopt : rejected_attribute(*module.syntax, form.value);
+        if (rejected) {
+            reject_capability(module, form.source, reason, out, *rejected);
         }
         if (const auto *value = std::get_if<ast::Function>(&form.value)) {
             const auto key = FunctionKey{value->name.name, value->clauses.at(0).arguments.size()};

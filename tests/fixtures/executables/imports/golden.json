@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "entry": "imports",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "42\n[3,2,1]\n[2,4]\n6\nmine\n\"7\"\n[a,b]\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "imp_lib.erl": "b04fb43b2621bfbe26e3c21a0b4e0a6d2a70907ac7f8fa809e255e413a0659f6",
+    "imports.erl": "f8b490af181ea0b174cee96f66841116c550a51889d468add13e33cdbce0a2c9"
+  }
+}

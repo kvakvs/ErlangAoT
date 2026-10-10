@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "files": [
+    "funs.erl"
+  ],
+  "exit_status": 1,
+  "diagnostics": [
+    {
+      "file": "funs.erl",
+      "line": 6,
+      "column": 8,
+      "severity": "error",
+      "message": "creating a fun from imported name reverse/1 is not allowed"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "funs.erl": "61ed0dc070ed1ccb789406ebdc619e78af3d33cec24f31762c876f520940b13d"
+  }
+}

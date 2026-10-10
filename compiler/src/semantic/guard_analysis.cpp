@@ -62,6 +62,9 @@ void body_service(BindingAnalysis &state, const ast::ExprId &id, const ast::Call
     } else if (const auto other = module_builtin(*state.module.syntax, call)) {
         state.function.services.emplace(expression,
                                         ServiceResolution{other->first, false, false, std::nullopt, other->second});
+    } else if (const auto imported = imported_builtin(state.module, call)) {
+        state.function.services.emplace(
+            expression, ServiceResolution{imported->first, false, false, std::nullopt, imported->second});
     }
 }
 

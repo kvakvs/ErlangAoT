@@ -1,6 +1,7 @@
 #include "declarations.hpp"
 #include "behaviours.hpp"
 #include "escript.hpp"
+#include "imports.hpp"
 #include "records.hpp"
 #include "symbols.hpp"
 #include <algorithm>
@@ -57,6 +58,38 @@ bool predefined_form(const Module &module, const ast::FormId &id) {
 const ast::TokenOrigin &attribute_name(const ast::Module &syntax, const ast::Form &form) {
     const auto extent = syntax.extent(form.source);
     return extent.size() > 1 ? extent[1] : syntax.anchor(form.source);
+}
+
+std::vector<ast::TermId> compile_options(const ast::Module &syntax) {
+    std::vector<ast::TermId> result;
+    for (const auto &id : syntax.forms()) {
+        const auto *attribute = std::get_if<ast::GenericAttribute>(&syntax.form(id).value);
+        if (!attribute || attribute->name.name != U"compile") {
+            continue;
+        }
+        std::vector<ast::TermId> pending{attribute->value};
+        while (!pending.empty()) {
+            const auto term = pending.back();
+            pending.pop_back();
+            if (const auto *list = std::get_if<ast::TermList>(&syntax.term(term).value)) {
+                pending.insert(pending.end(), list->elements.rbegin(), list->elements.rend());
+            } else {
+                result.push_back(term);
+            }
+        }
+    }
+    return result;
+}
+
+std::set<std::u32string> disabled_warnings(const ast::Module &syntax) {
+    std::set<std::u32string> result;
+    for (const auto &option : compile_options(syntax)) {
+        const auto *atom = std::get_if<ast::Atom>(&syntax.term(option).value);
+        if (atom && atom->name.starts_with(U"nowarn_")) {
+            result.insert(atom->name.substr(7));
+        }
+    }
+    return result;
 }
 
 std::optional<std::size_t> source_function(const Module &module, const FunctionKey &key) {
@@ -190,6 +223,7 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
     index_functions(*module, out);
     index_predefined(*module);
     index_exports(*module, out);
+    index_imports(*module, out);
     index_records(*module, out);
     index_callbacks(*module, out);
     if (options.escript_) {

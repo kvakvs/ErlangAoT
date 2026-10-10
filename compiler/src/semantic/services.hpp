@@ -4,6 +4,12 @@
 namespace clause::semantic {
 // Keep the semantic catalog available to metadata validation without consulting runtime registration.
 bool guard_signature(const FunctionKey &key);
+// Whether OTP auto-imports the erlang function unqualified: a guard BIF or an auto-imported body BIF Clause knows.
+bool auto_imported_bif(const FunctionKey &key);
+// A local call of a function -import takes from a module other than erlang that is a bridge builtin there
+// (io:format/2): its name and bridge index.
+std::optional<std::pair<FunctionKey, std::size_t>> imported_builtin(const Module &module,
+                                                                    const ast::CallExpression &call);
 // Classify supported immediate operators without widening guard legality or numeric representation support.
 std::optional<abi::v1::ImmediateOperation> immediate_operator(ast::BinaryOperator operation);
 // Map every authorized unary operator to the shared checked numeric/boolean service boundary.
@@ -31,6 +37,7 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
                                           const ast::CallExpression &call, bool top_test);
 // Validate all guard operands, including unreachable ones, and record ordinary immediate service calls.
 void resolve_services(Module &module, const Reporter &out, std::size_t work_limit = 1'000'000);
-// Admit only inert no_auto_import compile options and explicit erlang guard-signature imports.
-bool service_metadata(const ast::Module &syntax, const ast::FormValue &value);
+// What a form the capability check flags would change, named for the diagnostic (`-on_load attribute`, `-compile
+// option {parse_transform,m}`); empty for a -compile whose options are all inert.
+std::optional<std::string> rejected_attribute(const ast::Module &syntax, const ast::FormValue &value);
 } // namespace clause::semantic

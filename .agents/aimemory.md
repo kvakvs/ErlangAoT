@@ -538,3 +538,10 @@ Host and tool gotchas:
   that broke codegen_inspection (normal==disabled) and patternmatch_facts dominance. Predefined functions get no
   debug scope (else -g maps them onto real-file lines). Synthetic lexer buffer takes the module's physical name so
   IR "Erlang source files" lists real files only.
+- 65C (2026-10-10): erl_lint import rules: redefine_import rejects the whole attribute; define_import at the function;
+  fun_import for any imported name (even erlang); redefine_bif_import warning is two lines (lint.py joins
+  continuation lines). Capability diagnostics carry FeatureContext.operation. Python heredoc edits that contain
+  "\n" or "\d" inside replacement strings get mangled: use the Edit tool for such lines. Fixture import of a BIF
+  name: guard BIFs (length/1) cannot be redefined in OTP, use integer_to_list/1. luerl src now stops only on missing
+  library modules/BIFs (array, ordsets, math, io_lib, atom_to_binary/2, fun_info/2, get_module_info/2).
+- 2026-10-10 user: --entry may name FUNCTION/0 (startup_no_arguments flag), commit fe55f8b.

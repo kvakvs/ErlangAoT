@@ -3,9 +3,11 @@
 #include "capabilities.hpp"
 #include "features.hpp"
 #include "funs.hpp"
+#include "imports.hpp"
 #include "records.hpp"
 #include "services.hpp"
 #include <algorithm>
+#include <clause/compiler/printing.hpp>
 
 namespace clause::semantic {
 namespace {
@@ -47,7 +49,33 @@ Function *named_function(Module &owner, const FunctionKey &key, const bool remot
     return found == owner.lookup.end() ? nullptr : &owner.functions.at(found->second);
 }
 
-// Match name/arity first, then enforce remote visibility even for self-qualified calls.
+struct CallTarget {
+    // The module whose function a call reaches, and whether it is reached as a remote call.
+    Module *module_;
+    bool remote_;
+};
+
+// The module a call reaches: its literal module, the module -import names for a local call, or the caller's own.
+std::optional<CallTarget> call_target(const FunctionRef caller, const ast::CallExpression &call,
+                                      const ast::RemoteExpression *remote, const FunctionKey &key,
+                                      const Modules &modules, const ast::NodeSource &source, const Reporter &out) {
+    if (remote) {
+        auto *owner = call_module(caller, call, *remote, modules, source, out);
+        return owner ? std::optional{CallTarget{owner, true}} : std::nullopt;
+    }
+    const auto *imported = import_owner(*caller.module, key);
+    if (!imported) {
+        return CallTarget{caller.module, false};
+    }
+    const auto found = modules.find(*imported);
+    if (found == modules.end()) {
+        report(*caller.module, &source, "unknown module " + utf8(*imported), out);
+        return std::nullopt;
+    }
+    return CallTarget{found->second, true};
+}
+
+// Match name/arity first, then enforce remote visibility even for self-qualified and imported calls.
 std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpression &call, const Modules &modules,
                                   const ast::NodeSource &source, const Reporter &out) {
     const auto &syntax = *caller.module->syntax;
@@ -56,17 +84,18 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
     const auto &name = remote ? std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote->function)).value)
                               : std::get<ast::Atom>(target);
     const FunctionKey key{name.name, call.arguments.size()};
-    auto *owner = remote ? call_module(caller, call, *remote, modules, source, out) : caller.module;
-    if (!owner) {
+    const auto resolved = call_target(caller, call, remote, key, modules, source, out);
+    if (!resolved) {
         return {};
     }
-    auto *function = named_function(*owner, key, remote != nullptr);
+    auto *owner = resolved->module_;
+    auto *function = named_function(*owner, key, resolved->remote_);
     if (!function) {
         report(*caller.module, &source,
                "undefined function " + utf8(owner->name) + ":" + utf8(key.name) + "/" + std::to_string(key.arity), out);
         return {};
     }
-    if (remote && !function->exported) {
+    if (resolved->remote_ && !function->exported) {
         report(*caller.module, &source, "remote function is not exported: " + utf8(key.name), out);
         return {};
     }
@@ -81,9 +110,18 @@ bool direct_call(const FunctionRef caller, const ast::Expression &expression) {
            !fun_call(syntax, *call) && !dynamic_call(syntax, *call);
 }
 
-// A local fun F/A must name a function of its module or an auto-imported builtin (erl_lint undefined_function).
+// A local fun F/A must name a function of its module or an auto-imported builtin (erl_lint undefined_function), and
+// never an imported one (fun_import).
 void check_reference(const Module &module, const ast::Expression &expression, const Reporter &out) {
     const auto *reference = std::get_if<ast::LocalFunReference>(&expression.value);
+    const auto count = reference ? arity(reference->arity) : std::nullopt;
+    if (count && import_owner(module, {reference->name.name, *count})) {
+        report(module, &expression.source,
+               "creating a fun from imported name " + atom_source(utf8(reference->name.name)) + "/" +
+                   std::to_string(*count) + " is not allowed",
+               out);
+        return;
+    }
     if (!reference || fun_target(module, *reference) || module.fun_entries.contains(&expression)) {
         return;
     }
@@ -317,8 +355,9 @@ std::set<std::u32string> referenced_modules(const ast::Module &syntax) {
             pending.insert(pending.end(), children.begin(), children.end());
         }
     }
-    const auto behaviours = declared_behaviours(syntax);
-    result.insert(behaviours.begin(), behaviours.end());
+    for (const auto &names : {declared_behaviours(syntax), import_modules(syntax)}) {
+        result.insert(names.begin(), names.end());
+    }
     return result;
 }
 

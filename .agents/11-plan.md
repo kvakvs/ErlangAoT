@@ -132,7 +132,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–L are closed; phase M continues with steps 65C, 66, 69
+behavior. Phases A–L are closed; phase M continues with steps 66, 69
 and 70 below.
 
 | Step | Title | Commit |
@@ -412,32 +412,37 @@ than `erlang` and on optimization-only `-compile` options, with an
 unspecific `[behavior-changing attributes] notimpl`.
 
 - Success criteria
-  - [ ] `-import(Mod, [F/A, ...])` of any module: a local call `F(...)` of an
+  - [x] `-import(Mod, [F/A, ...])` of any module: a local call `F(...)` of an
     imported function, which the module does not define, is the remote call
     `Mod:F(...)` (literal module, library loading and remote export rules
     apply); an import overrides an auto-imported BIF of the same name and
     arity as in OTP. erl_lint's conflicts are reported with OTP's wording:
     importing one function from two modules, and defining an imported
     function. `fun F/A` of an imported function follows OTP.
-  - [ ] Optimization and reporting hints in `-compile` are accepted and
+  - [x] Optimization and reporting hints in `-compile` are accepted and
     ignored: `inline` and `{inline, [F/A]}`, `{inline_size, N}`,
     `{inline_effort, N}`, `inline_list_funcs`, `debug_info`, `deterministic`,
     report/verbosity options and `warn_*` beside the existing `nowarn_*` and
     `no_auto_import`; options that change meaning (`export_all`, parse
     transforms, `{d, ...}`, unknown ones) stay rejected.
-  - [ ] A rejected attribute names itself and the offending option, such as
+  - [x] A rejected attribute names itself and the offending option, such as
     `-on_load attribute`, `-compile option {parse_transform,eunit_autoexport}`
     or `-import of erlang:foo/1` (an import of an `erlang` function that is
     no builtin), instead of only the capability.
-  - [ ] Contracts in `docs/semantic.md`/`docs/compile.md`, differences, step
+  - [x] Contracts in `docs/semantic.md`/`docs/compile.md`, differences, step
     73 and the backlog updated.
 - Tests
-  - [ ] Executable golden: imported library and batch functions called
+  - [x] Executable golden: imported library and batch functions called
     locally, in guards where OTP allows, through `fun F/A`, and an import that
     overrides an auto-imported BIF.
-  - [ ] Lint goldens for the import conflicts OTP reports; CLI cases for the
+  - [x] Lint goldens for the import conflicts OTP reports; CLI cases for the
     accepted hints and the named rejections.
-  - [ ] luerl's `src/` gets past attribute admission (recorded, not a gate).
+  - [x] luerl's `src/` gets past attribute admission (recorded, not a gate).
+- Evidence (2026-10-10): `executables_imports` (OTP 29.1.1 stdout), lint cases
+  `imports_conflicts`, `imports_fun`, `imports_bif`, CLI cases; luerl `src/`
+  passes attribute admission and stops on missing library modules and
+  builtins (`array`, `ordsets`, `math`, `io_lib`, ...). Fresh fast CTest and
+  check-quality ([validation](../docs/validation.md#history)).
 
 <a id="step-66"></a>
 
