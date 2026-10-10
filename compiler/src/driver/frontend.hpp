@@ -43,6 +43,9 @@ struct FrontendRequest {
     std::vector<PendingExecutable> *pending_executables = nullptr;
     // Explicit entry selection (CLI or manifest) validated during analysis.
     std::optional<project::SelectedEntry> entry = {};
+    // Directories searched, in order and before the library, for Module.erl when the batch names a module no
+    // input defines (a project target's source_search_paths).
+    std::vector<std::filesystem::path> module_search_paths_ = {};
 };
 
 // Process one isolated batch; project targets never share declaration tables.

@@ -136,8 +136,13 @@ links every selected target that has an `output` or `entry` key, or that CLI
   Absolute paths stay absolute; `..` is allowed. No shell, environment or tilde
   expansion. Use `/` or TOML literal strings for Windows paths.
 - Literal relative sources try the base first, then `source_search_paths` in
-  order. An existing but unreadable candidate is an error. Search paths only
-  locate listed files; they do not enumerate modules or affect includes.
+  order. An existing but unreadable candidate is an error. Search paths do not
+  enumerate modules or affect includes.
+- When the target's sources name a module that none of them defines (a remote
+  call, `fun M:F/A`, `apply` with a literal module, `-behaviour` or `-import`),
+  the search paths are searched in order for `Module.erl`, before the
+  [library](library.md#how-programs-get-them); a found file joins the target
+  like a listed source, and its own references are resolved the same way.
 - Wildcards: `*` and `?` within a component, `**` as a whole component. Brackets,
   braces, negation and escapes are rejected. Matching is case-sensitive; `?` is
   one Unicode scalar of a valid UTF-8 name.
@@ -156,7 +161,7 @@ links every selected target that has an `output` or `entry` key, or that CLI
 | Setting | Manifest and CLI combination |
 | --- | --- |
 | `include_dirs` | Manifest order, after CLI `-I` (last CLI `-I` searched first); an entry with wildcards (`deps/*/include`, `apps/**/include`) expands in place to the existing directories it matches, sorted by UTF-8 path bytes (`**` also matches none, directory symlinks are skipped); an unmatched pattern is an error |
-| `source_search_paths` | Project source lookup only |
+| `source_search_paths` | Fallback roots for literal sources and the modules the target names but does not list; patterns expand like `include_dirs` (unmatched: `unmatched source search path pattern`) |
 | `defines` | Manifest first, then CLI; duplicates across both are errors |
 | `applications` | Manifest map; CLI entries replace matching names |
 | Feature lists | Manifest settings, then ordered CLI changes; CLI wins |

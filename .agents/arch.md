@@ -144,7 +144,8 @@
   bridge (`binary_value`), so the `arithmetic` capability is implemented. Step 38: conversions (`conversion_builtins()`, float text in
   `builtins/float_text`: printf for `%.*e`, OTP's own fixed rounding, shortest digits from `std::to_chars` placed by
   OTP's Ryu notation rules). Step 39: library modules (`library/stdlib/{lists,maps}.erl`, original Erlang) join a
-  batch in `driver/frontend` `add_library`: modules named by literal atoms (`semantic::referenced_modules`) that no
+  batch in `driver/frontend` `add_referenced` (project `source_search_paths` directories first, patterns expanded by
+  `project::pattern_directories`; then the library): modules named by literal atoms (`semantic::referenced_modules`) that no
   input declares (`semantic::declared_module`) are parsed from `linking::library_directory()` (relative to
   `clau`, `CLAUSE_DEFAULT_LIBRARY`) until closed; they compile, link and publish like inputs.
   Step 40 (`docs/io.md`): catalog entries of module `io` (`io_builtins()`); a qualified call of another module's

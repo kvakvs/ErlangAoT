@@ -94,9 +94,12 @@ Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
     result.targets.reserve(selected.size());
     for (const auto index : selected) {
         const auto &target = manifest.targets[index];
-        result.targets.push_back({target.name.value, target_sources(base, target, options.discovery),
+        auto search = search_directories(base, target, options.discovery);
+        auto sources = target_sources(base, target, search, options.discovery);
+        result.targets.push_back({target.name.value, std::move(sources),
                                   compose_options(target, base, options.working_directory, options.preprocessing),
-                                  output_path(target, options, base), entry_selection(target, options)});
+                                  output_path(target, options, base), entry_selection(target, options),
+                                  std::move(search)});
     }
     outputs(result);
     return result;

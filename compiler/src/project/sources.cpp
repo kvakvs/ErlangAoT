@@ -22,14 +22,25 @@ void append(Collection &result, const std::vector<std::filesystem::path> &paths,
 }
 } // namespace
 
+std::vector<std::filesystem::path> search_directories(const std::filesystem::path &base, const Target &target,
+                                                      const DiscoveryLimits limits) {
+    std::vector<std::filesystem::path> result;
+    for (const auto &pattern : target.options.source_search_paths) {
+        const auto directories = pattern_directories(base, pattern, "source search path", limits);
+        result.insert(result.end(), directories.begin(), directories.end());
+    }
+    return result;
+}
+
 std::vector<std::filesystem::path> target_sources(const std::filesystem::path &base, const Target &target,
+                                                  const std::span<const std::filesystem::path> search,
                                                   DiscoveryLimits limits) {
     Collection result;
     for (const auto &source : target.sources) {
         if (is_pattern(source.value)) {
             append(result, wildcard_sources(base, source, limits), source.site);
         } else {
-            append(result, {literal_source(base, source, target.options.source_search_paths)}, source.site);
+            append(result, {literal_source(base, source, search)}, source.site);
         }
     }
     for (const auto &directory : target.source_dirs) {

@@ -118,6 +118,7 @@ int run_project(const Options &options) {
         request.protected_inputs = protected_inputs(invocation);
         request.pending_publications = &pending;
         request.pending_executables = &executables;
+        request.module_search_paths_ = target.search_paths_;
         return process_files(target.sources, request, sink);
     };
     const int status = project::run(options.project, settings, execute, std::cout, std::cerr);

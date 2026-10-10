@@ -63,6 +63,25 @@ check(include_dir_patterns 0 "value=1.*value=2.*value=3.*value=4" "^$" "${globbe
 file(WRITE "${globbed}/unmatched.toml" "schema_version=1\n[[targets]]\nname='app'\nsources=['main.erl']\n[targets.options]\ninclude_dirs=['deps/*/missing']\n")
 check(include_dir_unmatched 1 "^$" "unmatched include directory pattern: deps/\\*/missing" "${globbed}/unmatched.toml" --parse-check)
 
+# source_search_paths patterns expand like include_dirs. Besides locating listed literal sources, the directories are
+# searched, before the library, for a module the batch names but no source defines (here helper, other and lists).
+set(searched "${WORK}/search_globs")
+file(WRITE "${searched}/main.erl"
+    "-module(main). -export([value/0]). value() -> helper:value() + other:value() + length(lists:reverse([1])).\n")
+file(WRITE "${searched}/deps/a/src/helper.erl" "-module(helper). -export([value/0]). value() -> 1.\n")
+file(WRITE "${searched}/apps/x/y/other.erl" "-module(other). -export([value/0]). value() -> 2.\n")
+file(WRITE "${searched}/apps/listed.erl" "-module(listed). -export([value/0]). value() -> other:value().\n")
+set(search_target "schema_version=1\n[[targets]]\nname='app'\n")
+file(WRITE "${searched}/project.toml"
+    "${search_target}sources=['main.erl','listed.erl']\n[targets.options]\nsource_search_paths=['deps/*/src','apps/**']\n")
+check(search_path_modules 0 "^$" "^$" "${searched}/project.toml")
+file(WRITE "${searched}/plain.toml" "${search_target}sources=['main.erl']\n")
+check(search_path_absent 1 "^$" "unknown module helper" "${searched}/plain.toml")
+file(WRITE "${searched}/unmatched.toml"
+    "${search_target}sources=['main.erl']\n[targets.options]\nsource_search_paths=['deps/*/missing']\n")
+check(search_path_unmatched 1 "^$" "unmatched source search path pattern: deps/\\*/missing" "${searched}/unmatched.toml"
+    --parse-check)
+
 # Separate OS processes compete for the same exclusive manifest destination.
 execute_process(COMMAND "${TOOL}" --new-project "race λ"
     COMMAND "${TOOL}" --new-project "race λ"

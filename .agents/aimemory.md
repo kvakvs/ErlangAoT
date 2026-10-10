@@ -545,3 +545,4 @@ Host and tool gotchas:
   name: guard BIFs (length/1) cannot be redefined in OTP, use integer_to_list/1. luerl src now stops only on missing
   library modules/BIFs (array, ordsets, math, io_lib, atom_to_binary/2, fun_info/2, get_module_info/2).
 - 2026-10-10 user: --entry may name FUNCTION/0 (startup_no_arguments flag), commit fe55f8b.
+- 2026-10-10 user: source_search_paths take */** patterns (project::pattern_directories, shared with include_dirs) and are searched for Module.erl of modules the target names but does not list, before the library (frontend add_referenced). codegen_placeholders: warning-only features publish into a separate artifact dir; output dir is wiped first so reruns pass.

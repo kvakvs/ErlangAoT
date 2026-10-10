@@ -26,6 +26,8 @@ struct PlannedTarget {
     std::optional<std::filesystem::path> output;
     // Explicit entry selection (CLI or manifest); absent means auto-detection when an executable is requested.
     std::optional<SelectedEntry> entry;
+    // Expanded source_search_paths, also searched for a module the batch names but no source defines.
+    std::vector<std::filesystem::path> search_paths_ = {};
 };
 
 struct Invocation {

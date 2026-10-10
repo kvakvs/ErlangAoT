@@ -168,18 +168,30 @@ bool defined(const Inputs &inputs, const std::u32string &name) {
                                [&](const auto &input) { return semantic::declared_module(input.syntax) == name; });
 }
 
-// Add the library modules the batch references but does not define, including those they reference in turn.
-bool add_library(const FrontendRequest &request, const DiagnosticSink &sink, Inputs &inputs) {
-    const auto directory = linking::library_directory();
+// The first Module.erl in the directories, in order; empty when none exists.
+std::filesystem::path module_source(const std::vector<std::filesystem::path> &directories, const std::u32string &name) {
+    const auto file = project::native_path(utf8(name) + ".erl");
+    for (const auto &directory : directories) {
+        std::error_code error;
+        if (std::filesystem::is_regular_file(directory / file, error)) {
+            return directory / file;
+        }
+    }
+    return {};
+}
+
+// Add the modules the batch references but does not define, from the search directories, then the library,
+// including those they reference in turn.
+bool add_referenced(const FrontendRequest &request, const DiagnosticSink &sink, Inputs &inputs) {
+    auto directories = request.module_search_paths_;
+    directories.push_back(linking::library_directory());
     std::set<std::u32string> added;
     bool failed = false;
     for (std::size_t scanned = 0; scanned < inputs.size(); ++scanned) {
         for (const auto &name : semantic::referenced_modules(inputs[scanned].syntax)) {
-            const auto path = directory / project::native_path(utf8(name) + ".erl");
-            if (defined(inputs, name) || !added.insert(name).second || !std::filesystem::is_regular_file(path)) {
-                continue;
-            }
-            failed = process_file(path, request, sink, inputs) || failed;
+            const auto path = defined(inputs, name) || !added.insert(name).second ? std::filesystem::path{}
+                                                                                  : module_source(directories, name);
+            failed = (!path.empty() && process_file(path, request, sink, inputs)) || failed;
         }
     }
     return failed;
@@ -198,7 +210,7 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
         failed = process_file(path, request, sink, inputs) || failed;
     }
     if (request.compile && !failed) {
-        failed = add_library(request, sink, inputs);
+        failed = add_referenced(request, sink, inputs);
     }
     if (request.compile && !failed) {
         failed = compile_batch(std::move(inputs), request, sink);

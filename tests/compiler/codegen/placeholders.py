@@ -1,6 +1,7 @@
 """Audit catalog-owned CLI capability paths for deferred compiler features."""
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 
@@ -30,8 +31,8 @@ def check(tool, work, feature, options, project, verbose):
     assert '[module="sample"]' in result.stderr, result.stderr
     if project:
         assert "audit" in result.stderr, result.stderr
-    assert (work / "output/sentinel").read_text(encoding="utf-8") == "preserved"
     if not warning:
+        assert (work / "output/sentinel").read_text(encoding="utf-8") == "preserved"
         assert sorted(p.name for p in (work / "output").iterdir()) == ["sentinel"]
 
 
@@ -39,10 +40,8 @@ def main():
     """Make missing catalog coverage fail when a compiler-owned feature is added."""
     tool, directory, catalog_path = sys.argv[1:]
     work = pathlib.Path(directory)
-    (work / "output").mkdir(parents=True, exist_ok=True)
-    for file in (work / "output").iterdir():
-        if file.is_file():
-            file.unlink()
+    shutil.rmtree(work / "output", ignore_errors=True)
+    (work / "output").mkdir(parents=True)
     (work / "output/sentinel").write_text("preserved", encoding="utf-8")
     catalog = pathlib.Path(catalog_path).read_text(encoding="utf-8")
     entries = re.findall(r'FeatureInfo\{.*?\.name = "([^"]+)".*?\.owner = FeatureOwner::(\w+).*?\.status = FeatureStatus::(\w+).*?\}', catalog, re.S)
@@ -53,7 +52,9 @@ def main():
     for feature, body in (CASES | WARNINGS).items():
         (work / "sample.erl").write_text("-module(sample).\n" + body + "\n", encoding="utf-8")
         for level in ["-O0", "-O2"]:
-            options = [level, "--emit", "obj", "--artifact-dir", str(work / "output")]
+            # Warning-only features compile and publish artifacts, so they get their own destination.
+            destination = work / ("warned" if feature in WARNINGS else "output")
+            options = [level, "--emit", "obj", "--artifact-dir", str(destination)]
             for project in [False, True]:
                 for verbose in [False, True]:
                     check(tool, work, feature, options, project, verbose)

@@ -17,7 +17,7 @@ void includes(PreprocessorOptions &result, const TargetOptions &target, const Ro
         path = absolute_path(roots.invocation, path);
     }
     for (const auto &pattern : target.include_dirs) {
-        const auto directories = include_directories(roots.manifest, pattern);
+        const auto directories = pattern_directories(roots.manifest, pattern, "include directory");
         result.include_paths.insert(result.include_paths.end(), directories.begin(), directories.end());
     }
 }

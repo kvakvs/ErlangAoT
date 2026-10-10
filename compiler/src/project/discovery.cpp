@@ -129,7 +129,8 @@ std::vector<fs::path> directory_sources(const fs::path &base, const Text &direct
     return discover({root, directory.site, nullptr, std::numeric_limits<std::size_t>::max(), limits});
 }
 
-std::vector<fs::path> include_directories(const fs::path &base, const Text &pattern, DiscoveryLimits limits) {
+std::vector<fs::path> pattern_directories(const fs::path &base, const Text &pattern, const std::string_view kind,
+                                          DiscoveryLimits limits) {
     const auto [prefix, suffix] = split_pattern(native_path(pattern.value));
     const auto root = absolute_path(base, prefix);
     if (suffix.empty()) {
@@ -138,7 +139,7 @@ std::vector<fs::path> include_directories(const fs::path &base, const Text &patt
     const auto glob = parse_glob({path_text(suffix), pattern.site});
     std::error_code error;
     if (!fs::is_directory(root, error)) {
-        fail(pattern.site, "unmatched include directory pattern: " + pattern.value);
+        fail(pattern.site, "unmatched " + std::string(kind) + " pattern: " + pattern.value);
     }
     const bool recursive = std::ranges::find(glob.components, U"**") != glob.components.end();
     const auto levels = recursive ? std::numeric_limits<std::size_t>::max() : glob.components.size();
@@ -150,7 +151,7 @@ std::vector<fs::path> include_directories(const fs::path &base, const Text &patt
     auto found = discover({root, pattern.site, &glob, levels, limits, true});
     result.insert(result.end(), found.begin(), found.end());
     if (result.empty()) {
-        fail(pattern.site, "unmatched include directory pattern: " + pattern.value);
+        fail(pattern.site, "unmatched " + std::string(kind) + " pattern: " + pattern.value);
     }
     return result;
 }
