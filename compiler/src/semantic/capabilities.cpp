@@ -247,6 +247,9 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
         if (rejected) {
             reject_capability(module, form.source, reason, out, *rejected);
         }
+        for (const auto &transform : parse_transforms(*module.syntax, form.value)) {
+            reject_capability(module, form.source, "parse transforms", out, transform, Severity::warning);
+        }
         if (const auto *value = std::get_if<ast::Function>(&form.value)) {
             const auto key = FunctionKey{value->name.name, value->clauses.at(0).arguments.size()};
             function(module, module.functions.at(module.lookup.at(key)), *value, out, word_bits);

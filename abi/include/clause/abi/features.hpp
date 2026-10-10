@@ -33,7 +33,8 @@ enum class FeatureId : std::uint8_t {
     executable_linking = 23,
     send_expressions = 24,
     expression_sequences = 25,
-    ports = 26
+    ports = 26,
+    parse_transforms = 27
 };
 enum class FeatureOwner : std::uint8_t { compiler, runtime, driver };
 enum class FeatureStatus : std::uint8_t { deferred, implemented };
@@ -237,6 +238,14 @@ inline constexpr std::array feature_catalog{
                 .status = FeatureStatus::implemented,
                 .plan_step = 57,
                 .failure_test = "executables_port_identities"},
+    // -compile({parse_transform, Module}) is accepted with a warning and not applied (user direction 2026-10-10).
+    FeatureInfo{.id = FeatureId::parse_transforms,
+                .name = "parse transforms",
+                .owner = FeatureOwner::compiler,
+                .boundary = "-compile option analysis (warning, not applied)",
+                .status = FeatureStatus::deferred,
+                .plan_step = 73,
+                .failure_test = "frontend_cli"},
 
 };
 

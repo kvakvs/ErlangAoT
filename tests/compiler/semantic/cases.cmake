@@ -234,8 +234,11 @@ semantic_case(record_info_defined "-module(a). -export([record_info/2]). record_
     "function record_info/2 already defined")
 semantic_case(compile_option "-module(a). -compile(export_all). f() -> 1." 1
     "behavior-changing attributes\] notimpl .*-compile option export_all")
-semantic_case(transform "-module(a). -compile([debug_info, {parse_transform,x}]). f() -> 1." 1
-    "-compile option {parse_transform, x}")
+# A parse transform is not applied: a warning names it and compilation continues.
+semantic_case(transform "-module(a). -compile([debug_info, {parse_transform,x}]). f() -> 1." 0
+    "^warning: transform.erl:1:13: .parse transforms. notimpl .*-compile option {parse_transform, x}")
+semantic_case(transform_module "-module(a). -compile({parse_transform,\"x\"}). f() -> 1." 1
+    "behavior-changing attributes")
 semantic_case(compile_nowarn "-module(a). -compile([nowarn_deprecated_catch, nowarn_unused_function]). f() -> 1." 0 "^$")
 # Optimization, debug and reporting hints are accepted and ignored (plan 11 step 65C).
 semantic_case(compile_hints

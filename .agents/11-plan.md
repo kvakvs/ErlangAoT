@@ -438,6 +438,9 @@ unspecific `[behavior-changing attributes] notimpl`.
   - [x] Lint goldens for the import conflicts OTP reports; CLI cases for the
     accepted hints and the named rejections.
   - [x] luerl's `src/` gets past attribute admission (recorded, not a gate).
+- Added 2026-10-10 (user direction): `{parse_transform, Module}` is accepted
+  and not applied, with a `[parse transforms] notimpl` warning (feature ID
+  27); applying transforms stays with [73](#step-73).
 - Evidence (2026-10-10): `executables_imports` (OTP 29.1.1 stdout), lint cases
   `imports_conflicts`, `imports_fun`, `imports_bif`, CLI cases; luerl `src/`
   passes attribute admission and stops on missing library modules and
@@ -517,7 +520,8 @@ Backlog: D03. Depends on: [58](#step-58). **Decision.**
 
 - Success criteria
   - [ ] Per-attribute decision (`compile` options, `parse_transform`,
-    `on_load`, others; `behaviour` is implemented by [65A](#step-65a),
+    `on_load`, parse transforms (accepted unapplied with a warning since
+    65C), others; `behaviour` is implemented by [65A](#step-65a),
     `module_info` and informational attributes by [65B](#step-65b), imports
     and compile hints by [65C](#step-65c));
     rejected ones keep diagnostics.

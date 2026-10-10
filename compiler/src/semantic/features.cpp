@@ -12,9 +12,10 @@ abi::v1::FeatureId capability_feature(const std::string_view reason) {
 }
 
 void reject_capability(const Module &module, const ast::NodeSource &source, const std::string_view reason,
-                       const Reporter &out, const std::string_view operation) {
+                       const Reporter &out, const std::string_view operation, const Severity severity) {
     const auto name = utf8(module.name);
     report(module, &source,
-           abi::v1::format_feature_failure(capability_feature(reason), {.module = name, .operation = operation}), out);
+           abi::v1::format_feature_failure(capability_feature(reason), {.module = name, .operation = operation}), out,
+           severity);
 }
 } // namespace clause::semantic
