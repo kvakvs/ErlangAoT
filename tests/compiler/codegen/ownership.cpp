@@ -30,9 +30,6 @@ CompilationRequest request(const std::string &filename) {
     batch.target_triple = "aarch64-unknown-linux-gnu";
     batch.optimization = OptimizationLevel::speed;
     batch.disable_type_specialization = true;
-    batch.implementation_debug.enable(27);
-    batch.implementation_debug.enable(23);
-    batch.implementation_debug.enable(23);
     return batch;
 }
 
@@ -48,9 +45,6 @@ void check_input(const Compilation &compilation) {
     const auto &batch = compilation.request();
     require(batch.project_target == "app" && batch.target_triple == "aarch64-unknown-linux-gnu", "options lost");
     require(batch.optimization == OptimizationLevel::speed && batch.disable_type_specialization, "policy lost");
-    require(batch.implementation_debug.enabled(23) && batch.implementation_debug.enabled(27) &&
-                !batch.implementation_debug.enabled(24),
-            "implementation debug selection lost");
     const auto &syntax = batch.inputs.front().syntax;
     const auto &function = std::get<ast::Function>(syntax.form(syntax.forms().back()).value);
     const auto &expression = syntax.expression(function.clauses.front().body.front());

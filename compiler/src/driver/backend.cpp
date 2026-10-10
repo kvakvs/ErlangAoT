@@ -20,7 +20,6 @@ codegen::CompilationRequest backend_request(std::vector<codegen::CompilationInpu
                                             const FrontendRequest &frontend) {
     codegen::CompilationRequest request;
     request.inputs = std::move(inputs);
-    request.implementation_debug = frontend.implementation_debug;
     request.project_target = frontend.project_target;
     request.progress = progress_callback(frontend);
     const auto &options = frontend.backend;

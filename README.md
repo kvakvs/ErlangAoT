@@ -287,7 +287,6 @@ clau [options] <source.erl>...
   -g                      Emit Erlang line tables; executables keep them for debuggers
   --lto                   Link modules as bitcode with link-time optimization (LLD targets)
   --verbose               Trace files and compilation phases to stderr
-  --impldebug <n[,n...]>   Enable debug output for selected implementation steps
   -I, --include <dir>      Add an include directory (last supplied searched first)
   -D, --define <name[=term]>  Define a macro (default value: true)
   --app-dir <app=dir>      Set an include_lib application directory
@@ -340,16 +339,6 @@ library includes are traced as they are loaded; inactive includes are skipped.
 The parser consumes expanded tokens incrementally, so its trace can precede include
 traces. `[comp]` adds semantic/backend phases and bounded specialization decisions
 as they start. Tracing goes to stderr in every mode, including projects.
-
-`--impldebug 23` or `--impldebug 23,24,27` selects optional implementation-step
-debug output independently of `--verbose`. Repeated options combine their selections;
-duplicates are ignored. Values are signed 32-bit decimal integers, with optional
-`+`/`-` signs and no spaces or empty list members. Steps 23–27 print inferred function
-inputs/results and parameter relations to stderr with the selected step prefix
-(for example, `[impldebug 27]`). These are analyzed lowering inputs, not an IR dump.
-Future steps can check their own number; selecting a step without debug output has
-no effect. The same selection applies to positional inputs and every selected
-project target. Frontend-only check/print actions do not run inference.
 
 Exit codes: **0** for success (including warnings), **1** for source/project errors,
 **2** for usage errors or unknown target names.

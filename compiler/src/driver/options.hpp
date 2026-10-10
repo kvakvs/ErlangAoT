@@ -1,5 +1,4 @@
 #pragma once
-#include "../implementation_debug.hpp"
 #include "backend_options.hpp"
 #include "project/cli.hpp"
 #include "project/entry.hpp"
@@ -13,8 +12,6 @@ struct Options {
     bool show_version = false;
     // Trace input ingestion without selecting a different compiler action.
     bool verbose = false;
-    // Select optional implementation-step diagnostics independently of normal verbosity.
-    ImplementationDebug implementation_debug;
     // Retain the requested destination for the future code-generation stage.
     std::filesystem::path output = "a.out";
     // Distinguish explicit output overrides from the positional-mode default.

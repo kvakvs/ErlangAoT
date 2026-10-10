@@ -31,15 +31,6 @@ void trace_analysis(const std::string_view phase, const codegen::CompilationRequ
         codegen::progress(request, phase, request.inputs[i].source_path, utf8(analysis.modules[i]->name));
     }
 }
-
-// Preserve existing implementation-step summaries independently of normal progress tracing.
-void debug_inference(const Analysis &analysis, const ImplementationDebug &debug, const DiagnosticSink &sink) {
-    for (const auto step : {23, 24, 25, 26, 27}) {
-        if (debug.enabled(step)) {
-            semantic::types::trace_inference(*analysis.inferred, analysis.calls, sink, step);
-        }
-    }
-}
 } // namespace
 
 bool analyze(const codegen::CompilationRequest &request, const EntryRequest &entry, Analysis &analysis,
@@ -70,7 +61,6 @@ bool analyze(const codegen::CompilationRequest &request, const EntryRequest &ent
     analysis.inferred = semantic::types::infer(analysis.calls);
     trace_analysis("contracts", request, analysis);
     semantic::types::check_contracts(*analysis.declared, *analysis.inferred, analysis.calls, report);
-    debug_inference(analysis, request.implementation_debug, sink);
     return !failed;
 }
 } // namespace clause::cli

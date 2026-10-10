@@ -11,6 +11,8 @@ name = "luerl"
 # List files or patterns, e.g. ["main.erl", "src/*.erl", "shared/**/*.erl"].
 # Patterns support *, ?, and ** as a whole directory component.
 sources = [
+  "references/otp/lib/kernel/src/application.erl",
+  "references/otp/lib/stdlib/src/supervisor.erl",
   "references/luerl/**/*.erl"
 ]
 # Recursively collect .erl files. Create/populate src or edit these selections.
@@ -22,12 +24,13 @@ output = "build/emqx"
 [targets.options]
 # Fallback roots for listed source filenames, e.g. ["src", "generated"].
 # These do not discover extra files or search for headers.
-source_search_paths = []
+source_search_paths = [
+  "references/otp/lib/**/src/"
+]
 # Header search directories, first listed first, e.g. ["include", "vendor/include"].
 # CLI -I directories take precedence; the last CLI -I is searched first.
 include_dirs = [
-  "references/otp/lib/compiler/include", 
-  "references/otp/lib/stdlib/include",
+  "references/otp/lib/**/include",
   "references/otp/lib",
   "references/luerl/**/include"
 ]

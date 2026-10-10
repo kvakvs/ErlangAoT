@@ -388,7 +388,7 @@ wrapped in a list (`{behaviour,[shape]}`, `{my_attr,[again]}`), and adds
     meaning and rows in `docs/differences.md`; contract in `docs/semantic.md`
     (or a new `docs/modules.md`), backlog and step 73 updated. Generated
     functions get no debug locations, source comments or `--print-types`
-    and `--impldebug` output.
+    output.
 - Tests
   - [x] Executable golden: `module_info/0,1` keys, `exports`, `attributes`
     with `-vsn`, multiple custom attributes and non-list values, remote and

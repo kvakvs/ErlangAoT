@@ -1,5 +1,4 @@
 #pragma once
-#include "../implementation_debug.hpp"
 #include "backend_options.hpp"
 #include "project/entry.hpp"
 #include <clause/compiler/diagnostic.hpp>
@@ -22,8 +21,6 @@ struct FrontendRequest {
     bool verbose = false;
     // Supply a fresh preprocessing configuration to each module session.
     PreprocessorOptions preprocessing;
-    // Preserve the same debug selection for every module in a positional or project batch.
-    ImplementationDebug implementation_debug;
     // Select shared backend policy for positional and project batches.
     BackendOptions backend = {};
     // Retain target identity and protect all selected project inputs during publication.

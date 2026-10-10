@@ -220,8 +220,8 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
 
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
-    FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check,          !options.preprocess,
-                            options.verbose,  options.preprocessing, options.implementation_debug, options.backend};
+    FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check, !options.preprocess,
+                            options.verbose,  options.preprocessing, options.backend};
     request.print_source = options.print_source;
     if (options.output_explicit) {
         request.executable_output = options.output;

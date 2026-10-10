@@ -2,7 +2,7 @@
 /build/
 /thirdparty/
 /.venv-quality/
-/references/otp/
+/references/
 /CMakeUserPresets.json
 .DS_Store
 /.idea

@@ -107,7 +107,6 @@ int run_project(const Options &options) {
                                 !options.preprocess,
                                 options.verbose,
                                 target.preprocessing,
-                                options.implementation_debug,
                                 target_options(options, invocation, target)};
         request.project_target = target.name;
         request.print_source = options.print_source;

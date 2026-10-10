@@ -115,9 +115,9 @@ these trailing forms, which are always exported and left out of
 - Attributes are data; only `on_load`, `nifs` and non-inert `-compile`
   options are rejected as behavior-changing.
 - The generated functions have no source line (OTP gives them none): no
-  debug locations, IR source comments, `--print-types` or `--impldebug`
-  entries. `module_info/0` holds the same literals as `module_info/1`, so it
-  makes no calls.
+  debug locations, IR source comments or `--print-types` entries.
+  `module_info/0` holds the same literals as `module_info/1`, so it makes no
+  calls.
 - Evidence: `executables_module_info` (OTP stdout; derived values by shape),
   `tests/fixtures/lint` cases `module_info_defined`, `exports_repeated`.
 

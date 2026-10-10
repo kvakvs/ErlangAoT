@@ -1,5 +1,4 @@
 #pragma once
-#include "../implementation_debug.hpp"
 #include "output.hpp"
 #include <clause/compiler/ast/module.hpp>
 #include <cstdint>
@@ -58,9 +57,9 @@ using ProgressCallback = std::function<void(const CompilationProgress &)>;
 
 struct CompilationLimits {
     // Bound retained module owners and total syntax work before semantic/backend traversal.
-    std::size_t modules = 1024;
-    std::size_t module_nodes = 250000;
-    std::size_t batch_nodes = 1000000;
+    std::size_t modules = 16384;
+    std::size_t module_nodes = 1500000;
+    std::size_t batch_nodes = 16000000;
     // Stop serialization before buffers exceed per-module or aggregate byte budgets.
     std::size_t module_bytes = std::size_t{64} * 1024 * 1024;
     std::size_t batch_bytes = std::size_t{256} * 1024 * 1024;
@@ -82,8 +81,6 @@ struct CompilationRequest {
     std::string project_target;
     // Observe only started phases; absent observers keep ordinary compilation silent.
     ProgressCallback progress;
-    // Carry opt-in implementation-step diagnostics without coupling them to ordinary tracing.
-    ImplementationDebug implementation_debug;
     // Select a normalized LLVM triple; empty prefers the running host's triple, CPU and features.
     std::string target_triple;
     // Carry the requested pipeline policy without performing optimization yet.
