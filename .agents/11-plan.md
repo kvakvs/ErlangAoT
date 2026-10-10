@@ -122,7 +122,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [58A](#step-58a)–[58N3](#step-58n3), [59](#step-59)–[62B](#step-62b) | F23, F25, F29–F34 |
-| M. Validation closure | [63](#step-63)–[70](#step-70), [65A](#step-65a), [65B](#step-65b) | V01–V04, D03 |
+| M. Validation closure | [63](#step-63)–[70](#step-70), [65A](#step-65a), [65B](#step-65b), [65C](#step-65c) | V01–V04, D03 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
 
@@ -132,7 +132,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–L are closed; phase M continues with steps 66, 69
+behavior. Phases A–L are closed; phase M continues with steps 65C, 66, 69
 and 70 below.
 
 | Step | Title | Commit |
@@ -400,6 +400,45 @@ wrapped in a list (`{behaviour,[shape]}`, `{my_attr,[again]}`), and adds
   lint cases `module_info_defined`, `exports_repeated`; fresh fast CTest and
   check-quality ([validation](../docs/validation.md#history)).
 
+<a id="step-65c"></a>
+
+### 65C. Import functions, accept compile hints, name rejected attributes
+
+Backlog: D03 (selected slice). Depends on: [65B](#step-65b). Added 2026-10-10
+(user direction, from compiling luerl); runs right after 65B.
+
+Real projects such as luerl stop on `-import(Mod, [F/A])` of modules other
+than `erlang` and on optimization-only `-compile` options, with an
+unspecific `[behavior-changing attributes] notimpl`.
+
+- Success criteria
+  - [ ] `-import(Mod, [F/A, ...])` of any module: a local call `F(...)` of an
+    imported function, which the module does not define, is the remote call
+    `Mod:F(...)` (literal module, library loading and remote export rules
+    apply); an import overrides an auto-imported BIF of the same name and
+    arity as in OTP. erl_lint's conflicts are reported with OTP's wording:
+    importing one function from two modules, and defining an imported
+    function. `fun F/A` of an imported function follows OTP.
+  - [ ] Optimization and reporting hints in `-compile` are accepted and
+    ignored: `inline` and `{inline, [F/A]}`, `{inline_size, N}`,
+    `{inline_effort, N}`, `inline_list_funcs`, `debug_info`, `deterministic`,
+    report/verbosity options and `warn_*` beside the existing `nowarn_*` and
+    `no_auto_import`; options that change meaning (`export_all`, parse
+    transforms, `{d, ...}`, unknown ones) stay rejected.
+  - [ ] A rejected attribute names itself and the offending option, such as
+    `-on_load attribute`, `-compile option {parse_transform,eunit_autoexport}`
+    or `-import of erlang:foo/1` (an import of an `erlang` function that is
+    no builtin), instead of only the capability.
+  - [ ] Contracts in `docs/semantic.md`/`docs/compile.md`, differences, step
+    73 and the backlog updated.
+- Tests
+  - [ ] Executable golden: imported library and batch functions called
+    locally, in guards where OTP allows, through `fun F/A`, and an import that
+    overrides an auto-imported BIF.
+  - [ ] Lint goldens for the import conflicts OTP reports; CLI cases for the
+    accepted hints and the named rejections.
+  - [ ] luerl's `src/` gets past attribute admission (recorded, not a gate).
+
 <a id="step-66"></a>
 
 ### 66. Validate macOS Apple Silicon
@@ -474,7 +513,8 @@ Backlog: D03. Depends on: [58](#step-58). **Decision.**
 - Success criteria
   - [ ] Per-attribute decision (`compile` options, `parse_transform`,
     `on_load`, others; `behaviour` is implemented by [65A](#step-65a),
-    `module_info` and informational attributes by [65B](#step-65b));
+    `module_info` and informational attributes by [65B](#step-65b), imports
+    and compile hints by [65C](#step-65c));
     rejected ones keep diagnostics.
 - Tests
   - [ ] CLI diagnostics for each rejected attribute.

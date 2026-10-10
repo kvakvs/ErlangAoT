@@ -121,7 +121,8 @@ checked as implemented.
   ([73](11-plan.md#step-73)): compile options, parse transforms, on-load;
   `-behaviour` implemented by [65A](11-plan.md#step-65a);
   `module_info/0,1` and informational attributes implemented by
-  [65B](11-plan.md#step-65b).
+  [65B](11-plan.md#step-65b); imports and compile hints planned as
+  [65C](11-plan.md#step-65c).
 - **D04 — Public stage interchange** ([74](11-plan.md#step-74)): only for a
   concrete consumer.
 - **D05 — Intermediate-stage readers** ([75](11-plan.md#step-75)): directories
