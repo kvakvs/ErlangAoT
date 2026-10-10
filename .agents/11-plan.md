@@ -122,7 +122,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [58A](#step-58a)–[58N3](#step-58n3), [59](#step-59)–[62B](#step-62b) | F23, F25, F29–F34 |
-| M. Validation closure | [63](#step-63)–[70](#step-70), [65A](#step-65a) | V01–V04, D03 |
+| M. Validation closure | [63](#step-63)–[70](#step-70), [65A](#step-65a), [65B](#step-65b) | V01–V04, D03 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
 
@@ -132,7 +132,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–L are closed; phase M continues with steps 66, 69
+behavior. Phases A–L are closed; phase M continues with steps 65B, 66, 69
 and 70 below.
 
 | Step | Title | Commit |
@@ -310,7 +310,7 @@ and pinned `erl_lint` (`check_behaviour`).
 - Success criteria
   - [x] `-behaviour(M)` and `-behavior(M)` are accepted and repeatable.
     `module_info/0,1` does not exist in Clause yet, so the attributes are not
-    visible at run time (decided 2026-10-10).
+    visible at run time (decided 2026-10-10; [65B](#step-65b) adds it).
   - [x] Callbacks of `M` come from its `-callback` and `-optional_callbacks`
     declarations, resolved from batch modules and the shipped library; a
     module declaring `-callback` exports a generated `behaviour_info/1`
@@ -339,6 +339,61 @@ and pinned `erl_lint` (`check_behaviour`).
 - Evidence (2026-10-10): `lint_diagnostics` (8 cases, OTP 29.1.1 goldens),
   `executables_behaviours`, semantic CLI cases; fresh fast CTest 234/234,
   check-quality clean ([validation](../docs/validation.md#history)).
+
+<a id="step-65b"></a>
+
+### 65B. Generate `module_info/0,1` and keep informational attributes
+
+Backlog: D03 (selected slice). Depends on: [65A](#step-65a). Added 2026-10-10
+(user direction); runs right after 65A, before every other remaining step.
+
+Every module gets OTP's predefined, exported `module_info/0` and
+`module_info/1` ([modules](https://www.erlang.org/doc/system/modules.html),
+`erl_internal:add_predefined_functions`: both call
+`erlang:get_module_info/1,2`), and informational attributes stop being
+rejected. Behavior-changing attributes (`on_load`, `nifs`, `-compile` options
+other than `nowarn_*`/`no_auto_import`, parse transforms, wider `-import`)
+stay rejected for [73](#step-73).
+
+Observed under OTP 29.1.1 (2026-10-10), to be confirmed by goldens:
+`module_info()` is `[{module,M},{exports,_},{attributes,_},{compile,_},{md5,_}]`;
+`exports` lists the source exports in order, then `behaviour_info/1` when
+generated, then `module_info/0`, `module_info/1`; `attributes` keeps every
+attribute except `module`, `export`, `import`, `export_type`, `type`,
+`opaque`, `nominal`, `spec`, `callback`, `optional_callbacks`, `record`,
+`compile`, `file`, `doc`, `moduledoc`, in source order, a non-list value
+wrapped in a list (`{behaviour,[shape]}`, `{my_attr,[again]}`), and adds
+`{vsn,[Integer]}` (from the MD5) when the source has no `-vsn`;
+`module_info(bogus)` raises `badarg`.
+
+- Success criteria
+  - [ ] `module_info/0,1` are generated and exported like the 65A
+    `behaviour_info/1`, but, unlike it and as in OTP's erl_lint, local calls
+    and `fun module_info/1` reach them, an explicit export only warns
+    (`function module_info/0 already exported`), and a hand-written
+    definition is an error (`function module_info/0 already defined`).
+  - [ ] `erlang:get_module_info/1,2` exists as a runtime builtin over
+    registered module data: `module`, `exports`, `attributes`, `compile`,
+    `md5`, `functions`, `nifs` (`[]`), `native` (`false`); the attribute
+    term is emitted with the module (descriptor or literal data) and survives
+    collection and copying like other literals.
+  - [ ] Accepted informational attributes: `vsn`, `author`, `copyright`,
+    `deprecated`, `behaviour`/`behavior`, `dialyzer` and any other
+    user-defined literal attribute (`-my_attr(Term).`), all visible through
+    `module_info(attributes)`; names reserved for behavior changes keep the
+    capability diagnostic.
+  - [ ] Values that cannot match OTP (`md5` bytes, the `vsn` integer
+    derived from it, `compile` `version`/`options`/`source`, `functions`
+    entries OTP adds for its own generated code) have a documented Clause
+    meaning and rows in `docs/differences.md`; contract in `docs/semantic.md`
+    (or a new `docs/modules.md`), backlog and step 73 updated.
+- Tests
+  - [ ] Executable golden: `module_info/0,1` keys, `exports`, `attributes`
+    with `-vsn`, multiple custom attributes and non-list values, remote and
+    `apply/3` calls, `badarg` for an unknown key; values that differ
+    (`md5`, `compile`, missing-`vsn` integer) are checked by shape only.
+  - [ ] Lint goldens (`tests/fixtures/lint`) for the diagnostics OTP shares
+    (hand-written definition, explicit export); CLI cases for the rest.
 
 <a id="step-66"></a>
 
@@ -413,7 +468,8 @@ Backlog: D03. Depends on: [58](#step-58). **Decision.**
 
 - Success criteria
   - [ ] Per-attribute decision (`compile` options, `parse_transform`,
-    `on_load`, others; `behaviour` is implemented by [65A](#step-65a));
+    `on_load`, others; `behaviour` is implemented by [65A](#step-65a),
+    `module_info` and informational attributes by [65B](#step-65b));
     rejected ones keep diagnostics.
 - Tests
   - [ ] CLI diagnostics for each rejected attribute.

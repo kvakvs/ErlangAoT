@@ -106,8 +106,8 @@ harmless.
 
 ## Code Style Guide
 
-- Internal fields of classes use trailing underscore. Rename existing fields
-  when they did not have an underscore while you're working on them.
+- Internal fields of classes and structs: use trailing underscore.
+  - Rename existing fields when they did not have an underscore while you're working on them.
 - Constants and inline constexpr constants prefer ALL_CAPS_SNAKE_CASE
 - Function names and local variables: lower_snake_case
 - Class names and struct names: public use CapitalCase, and private can go any
@@ -156,3 +156,10 @@ harmless.
   `Clause::abi`. Never `add_subdirectory` the repository into a new test to
   rebuild the runtime; only `runtime_link` does that, to prove the standalone
   LLVM-free runtime build, and the `examples/compile` example shows it to users.
+- A successful test program should not silently exit, it should actively confirm success
+  by printing "<program name>: ok". So that there is no confusion on whether a test 
+  succeeded or silently crashed/exited. Update existing tests to this behavior.
+  - a program that is supposed to fail (non-zero exit, expected stderr) should do 
+    anything else other than printing "<program name>: ok", it can silently exit, it 
+    can crash, it can print an error - everything should not be considered a success.
+    Of course for those test steps which already adopted such behavior change
