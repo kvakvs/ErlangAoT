@@ -156,6 +156,21 @@ StagingDirectory::~StagingDirectory() {
 
 StagingDirectory::StagingDirectory(StagingDirectory &&other) noexcept : directory(std::exchange(other.directory, {})) {}
 
+namespace {
+// The Clang driver a link would run; empty when none is found (an actual link reports that).
+std::string linker_or_empty(const std::optional<std::filesystem::path> &linker) {
+    try {
+        return find_linker(linker);
+    } catch (const std::runtime_error &) {
+        return {};
+    }
+}
+} // namespace
+
+LinkTools resolve_link_tools(const LinkRequest &request) {
+    return {executable_path(request), linker_or_empty(request.linker), runtime_library_path(request.runtime_library)};
+}
+
 StagedExecutable stage_executable(const LinkRequest &request) {
     const auto output = executable_path(request);
     if (request.create_directory) {

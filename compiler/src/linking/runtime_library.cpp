@@ -76,10 +76,13 @@ std::string describe(const ObjectKind &kind) {
 }
 } // namespace
 
+std::filesystem::path runtime_library_path(const std::optional<std::filesystem::path> &library) {
+    return library ? project::absolute_path(std::filesystem::current_path(), *library)
+                   : (compiler_directory() / project::native_path(CLAUSE_DEFAULT_RUNTIME)).lexically_normal();
+}
+
 std::filesystem::path find_runtime_library(const std::optional<std::filesystem::path> &library) {
-    const auto path = library
-                          ? project::absolute_path(std::filesystem::current_path(), *library)
-                          : (compiler_directory() / project::native_path(CLAUSE_DEFAULT_RUNTIME)).lexically_normal();
+    const auto path = runtime_library_path(library);
     std::error_code error;
     if (!std::filesystem::is_regular_file(path, error)) {
         throw std::runtime_error("runtime library not found: " + project::path_text(path) +

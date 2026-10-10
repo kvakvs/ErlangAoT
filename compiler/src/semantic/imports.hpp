@@ -7,6 +7,4 @@ namespace clause::semantic {
 void index_imports(Module &module, const Reporter &out);
 // The module a local call of the function reaches through -import; null when it is not imported.
 const std::u32string *import_owner(const Module &module, const FunctionKey &key);
-// The modules -import attributes name, so library modules join the batch.
-std::vector<std::u32string> import_modules(const ast::Module &syntax);
 } // namespace clause::semantic

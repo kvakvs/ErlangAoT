@@ -132,7 +132,8 @@ in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
 | `--print-ir` / `--print-optimized-ir` | Verified IR before/after LLVM passes, with Erlang source lines as comments |
 | `--print-types` | Each module as Erlang source annotated with inferred types ([semantic](semantic.md#--print-types)); stops before LLVM |
 | `--verbose` | `[pp]`, `[parse]` and `[comp]` phase events on stderr |
-| `--print-inputs` | List the selected source files on stdout, one per line, and exit without preprocessing, parsing or compiling them ([projects](projects.md#cli-and-target-selection)) |
+| `--print-env` | Print the resolved compile environment as TOML on stdout and exit without processing sources ([environment report](#environment-report)) |
+| `--print-inputs` | Preprocess and parse the inputs, add the modules they name as compilation does, then list every source of the batch on stdout and stop before compilation ([projects](projects.md#cli-and-target-selection)) |
 
 - Without `--emit`, compilation verifies objects in memory and writes nothing.
 - Positional inputs form one batch; each project target is its own batch.
@@ -148,6 +149,54 @@ in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
   comment headers and are not one parseable module. Use `--emit llvm-ir` for
   tool input. Source-line comments show original text (unexpanded macros) and
   survive optimization through debug locations.
+
+## Environment report
+
+`--print-env` validates the whole command line (conflicts, readable positional
+inputs, project planning), then prints what that command would use as one TOML
+document on stdout, exits 0 and reads no source. Paths are absolute, with `/`.
+
+```toml
+# clau compile environment (--print-env)
+command = ["clau", "--print-env", "-O2", "-o", "app", "main.erl"]  # as given
+actions = ["link"]          # see below
+working_directory = "/work"
+
+[[targets]]                 # one per selected project target; one for positional inputs
+name = "app"                # project targets only
+project = "/work/project.toml"
+sources = ["/work/src/main.erl"]           # globs and search paths resolved
+library_directory = "/clau/library/stdlib" # searched after source_search_paths
+entry = "main:main"         # or "auto" when linking without --entry
+output = "/work/app"        # linking only: final name (".exe" on Windows)
+linker = "/usr/bin/clang++" # linking only; "" when none is found
+runtime_library = "/clau/lib/libclause_runtime.a"
+
+[targets.options]           # manifest option names
+source_search_paths = []    # directories, patterns expanded
+include_dirs = []           # search order, patterns expanded
+defines = []
+applications = { "stdlib" = "/otp/lib/stdlib" }  # last mapping wins
+enabled_features = ["maybe_expr"]                # OTP defaults plus changes
+
+[targets.backend]
+target_triple = "x86_64-unknown-linux-gnu"  # host when not given
+optimization = "O2"
+type_specialization = true  # O2 without --no-type-specialization
+debug_info = false
+lto = false
+emit = "none"               # or obj, llvm-ir, llvm-bc
+artifact_dir = "/work/build/aot"
+```
+
+(Arrays print one item per line.) `actions` lists the frontend actions
+(`print-pp`, `parse-check`, `print-ast`, `print-source`, else
+`preprocess-check`; `print-inputs` alone replaces them), else the inspections
+(`print-types`, `print-ir`, `print-optimized-ir`), else `emit`, `link` (`-o`) or
+`compile`. In a project build, targets with an `output` link too. Modules found
+later by name (through `source_search_paths` or the library) are not listed:
+finding them needs parsing (`--print-inputs` does that). `--print-env` cannot be combined with
+`--new-project`.
 
 ## Backend
 

@@ -43,11 +43,12 @@ struct FrontendRequest {
     // Directories searched, in order and before the library, for Module.erl when the batch names a module no
     // input defines (a project target's source_search_paths).
     std::vector<std::filesystem::path> module_search_paths_ = {};
+    // Parse and add referenced modules as compilation would, then list the batch's sources instead.
+    // Added for --print-inputs.
+    bool list_inputs = false;
 };
 
 // Process one isolated batch; project targets never share declaration tables.
 bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
                    const DiagnosticSink &diagnostics);
-// List selected inputs one per line on stdout without processing them (--print-inputs).
-void print_inputs(std::span<const std::filesystem::path> paths);
 } // namespace clause::cli

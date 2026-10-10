@@ -329,6 +329,40 @@ const ast::Atom *named_module(const ast::Module &syntax, const ast::Expression &
     }
     return applied_module(syntax, *call);
 }
+
+// The module an attribute form names: -behaviour(M) or -import(M, [...]). Added for --print-inputs.
+const ast::Atom *attribute_module(const ast::Module &syntax, const ast::Form &form) {
+    if (const auto *import = std::get_if<ast::ImportAttribute>(&form.value)) {
+        return &import->module;
+    }
+    return behaviour_name(syntax, form);
+}
+
+// Referenced module names with their earliest naming site. Added for --print-inputs.
+using References = std::map<std::u32string, ast::NodeSource>;
+
+// Keep the earliest naming site: forms are visited in order, tokens within one form compare by position.
+// Added for --print-inputs.
+void note(References &result, const std::u32string &name, const ast::NodeSource &source) {
+    const auto [found, inserted] = result.try_emplace(name, source);
+    if (!inserted && found->second.form == source.form && source.begin < found->second.begin) {
+        found->second = source;
+    }
+}
+
+// Note the modules one function's expressions name. Added for --print-inputs.
+void note_function(const ast::Module &syntax, const ast::Function &function, References &result) {
+    auto pending = function_roots(function);
+    while (!pending.empty()) {
+        const auto &expression = syntax.expression(pending.back());
+        pending.pop_back();
+        if (const auto *module = named_module(syntax, expression)) {
+            note(result, module->name, expression.source);
+        }
+        const auto children = expression_children(expression);
+        pending.insert(pending.end(), children.begin(), children.end());
+    }
+}
 } // namespace
 
 std::optional<std::u32string> declared_module(const ast::Module &syntax) {
@@ -340,23 +374,16 @@ std::optional<std::u32string> declared_module(const ast::Module &syntax) {
     return std::nullopt;
 }
 
-std::set<std::u32string> referenced_modules(const ast::Module &syntax) {
-    std::set<std::u32string> result;
+std::map<std::u32string, ast::NodeSource> referenced_modules(const ast::Module &syntax) {
+    References result;
     for (const auto &id : syntax.forms()) {
-        const auto *function = std::get_if<ast::Function>(&syntax.form(id).value);
-        auto pending = function ? function_roots(*function) : std::vector<ast::ExprId>{};
-        while (!pending.empty()) {
-            const auto &expression = syntax.expression(pending.back());
-            pending.pop_back();
-            if (const auto *module = named_module(syntax, expression)) {
-                result.insert(module->name);
-            }
-            const auto children = expression_children(expression);
-            pending.insert(pending.end(), children.begin(), children.end());
+        const auto &form = syntax.form(id);
+        if (const auto *module = attribute_module(syntax, form)) {
+            note(result, module->name, form.source);
         }
-    }
-    for (const auto &names : {declared_behaviours(syntax), import_modules(syntax)}) {
-        result.insert(names.begin(), names.end());
+        if (const auto *function = std::get_if<ast::Function>(&form.value)) {
+            note_function(syntax, *function, result);
+        }
     }
     return result;
 }

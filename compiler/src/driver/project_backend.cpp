@@ -1,10 +1,12 @@
 #include "../artifacts/artifacts.hpp"
 #include "../project/command.hpp"
 #include "../project/paths.hpp"
+#include "environment.hpp"
 #include "frontend.hpp"
 #include "options.hpp"
 #include "publication.hpp"
 #include <iostream>
+#include <utility>
 
 namespace clause::cli {
 namespace {
@@ -73,12 +75,18 @@ int publish_executables(const std::vector<PendingExecutable> &pending) {
     return 0;
 }
 
-// List one target's resolved sources, naming the target first when several are selected.
-bool print_target_inputs(const project::Invocation &invocation, const project::PlannedTarget &target) {
-    if (invocation.targets.size() > 1) {
-        std::cout << "[target " << target.name << "]\n";
-    }
-    print_inputs(target.sources);
+// Print one target's environment with the artifact root and executable plan the build would use.
+bool print_target_environment(const Options &options, const project::Invocation &invocation,
+                              const project::PlannedTarget &target) {
+    const auto backend = target_options(options, invocation, target);
+    print_environment_target({.name = target.name,
+                              .project = invocation.file,
+                              .sources = target.sources,
+                              .search_paths = target.search_paths_,
+                              .preprocessing = target.preprocessing,
+                              .backend = backend,
+                              .output = target.output,
+                              .entry = target.entry});
     return false;
 }
 
@@ -93,9 +101,9 @@ int publish_targets(const std::vector<Publication> &pending) {
     }
     return 0;
 }
-} // namespace
 
-int run_project(const Options &options) {
+// Plan targets with the invocation's overrides; frontend-only requests never plan executable outputs.
+project::PlanOptions plan_settings(const Options &options) {
     project::PlanOptions settings;
     settings.working_directory = std::filesystem::current_path();
     settings.preprocessing = options.preprocessing;
@@ -105,21 +113,40 @@ int run_project(const Options &options) {
         settings.output = options.output;
     }
     settings.entry = options.entry;
+    return settings;
+}
+
+// Report planned targets as TOML without processing their sources (--print-env).
+int report_project(const Options &options, const std::span<char *const> arguments) {
+    bool header = false;
+    const project::TargetExecutor execute = [&](const project::Invocation &invocation,
+                                                const project::PlannedTarget &target, const project::MessageSink &) {
+        if (!std::exchange(header, true)) {
+            print_environment_header(arguments, options);
+        }
+        return print_target_environment(options, invocation, target);
+    };
+    return project::run(options.project, plan_settings(options), execute, std::cout, std::cerr);
+}
+} // namespace
+
+int run_project(const Options &options, const std::span<char *const> arguments) {
+    if (options.print_env) {
+        return report_project(options, arguments);
+    }
     std::vector<Publication> pending;
     std::vector<PendingExecutable> executables;
     const project::TargetExecutor execute = [&](const project::Invocation &invocation,
                                                 const project::PlannedTarget &target,
                                                 const project::MessageSink &sink) {
-        if (options.print_inputs) {
-            return print_target_inputs(invocation, target);
-        }
         FrontendRequest request{options.print_pp,
                                 options.print_ast,
                                 options.parse_check,
-                                !options.preprocess,
+                                !options.preprocess || options.print_inputs,
                                 options.verbose,
                                 target.preprocessing,
                                 target_options(options, invocation, target)};
+        request.list_inputs = options.print_inputs; // Added for --print-inputs.
         request.project_target = target.name;
         request.print_source = options.print_source;
         request.executable_output = target.output;
@@ -132,7 +159,7 @@ int run_project(const Options &options) {
         request.module_search_paths_ = target.search_paths_;
         return process_files(target.sources, request, sink);
     };
-    const int status = project::run(options.project, settings, execute, std::cout, std::cerr);
+    const int status = project::run(options.project, plan_settings(options), execute, std::cout, std::cerr);
     if (status != 0) {
         return status;
     }

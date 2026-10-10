@@ -108,14 +108,4 @@ const std::u32string *import_owner(const Module &module, const FunctionKey &key)
     const auto found = module.imports_.find(key);
     return found == module.imports_.end() ? nullptr : &found->second;
 }
-
-std::vector<std::u32string> import_modules(const ast::Module &syntax) {
-    std::vector<std::u32string> result;
-    for (const auto &id : syntax.forms()) {
-        if (const auto *value = std::get_if<ast::ImportAttribute>(&syntax.form(id).value)) {
-            result.push_back(value->module.name);
-        }
-    }
-    return result;
-}
 } // namespace clause::semantic

@@ -1,5 +1,6 @@
 #pragma once
 #include "declarations.hpp"
+#include <map>
 
 namespace clause::semantic {
 struct FunctionRef {
@@ -33,6 +34,7 @@ struct CallGraph {
 CallGraph resolve_calls(std::span<const std::unique_ptr<Module>> modules, const Reporter &out);
 // The name a module declares with -module, if any.
 std::optional<std::u32string> declared_module(const ast::Module &syntax);
-// The modules a module names with a literal atom: M:F(...), fun M:F/A, apply(M, F, Args) and -behaviour(M).
-std::set<std::u32string> referenced_modules(const ast::Module &syntax);
+// The modules a module names with a literal atom (M:F(...), fun M:F/A, apply(M, F, Args), -behaviour(M) and
+// -import(M, ...)), each with its earliest naming site (sites added for --print-inputs).
+std::map<std::u32string, ast::NodeSource> referenced_modules(const ast::Module &syntax);
 } // namespace clause::semantic

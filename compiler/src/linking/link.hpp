@@ -61,6 +61,15 @@ struct StagedExecutable {
     std::filesystem::path symbols = {};
 };
 
+struct LinkTools {
+    // Final executable path (".exe" applied), Clang driver (empty when none is found) and runtime archive.
+    std::filesystem::path output;
+    std::string linker;
+    std::filesystem::path runtime_library;
+};
+
+// Resolve what linking `request` would use, without checking the destination or the runtime archive.
+LinkTools resolve_link_tools(const LinkRequest &request);
 // Link in a private staging directory beside the output without touching the output.
 // Failures throw std::runtime_error; the staging directory is removed.
 StagedExecutable stage_executable(const LinkRequest &request);

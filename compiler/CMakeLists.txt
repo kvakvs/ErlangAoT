@@ -30,7 +30,7 @@ target_include_directories(clause_frontend PUBLIC include PRIVATE src)
 target_link_libraries(clause_frontend PRIVATE clause_parser_dependency)
 
 add_executable(clau src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
-    src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/predefined.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp)
+    src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/predefined.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp src/driver/environment.cpp)
 if(WIN32 AND MSVC)
     # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
     target_sources(clau PRIVATE clau.manifest)

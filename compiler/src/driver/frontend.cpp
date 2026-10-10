@@ -180,21 +180,76 @@ std::filesystem::path module_source(const std::vector<std::filesystem::path> &di
     return {};
 }
 
+// Added for --print-inputs.
+struct ReferencedInput {
+    // A module source added because a batch module names it, and "file:line" of the first naming site.
+    std::filesystem::path path;
+    std::string site;
+};
+
+// Module discovery state shared by add_referenced and the listing. Added for --print-inputs.
+struct Discovery {
+    // Search directories in order (source_search_paths, then the library), and the module names already handled.
+    std::vector<std::filesystem::path> directories;
+    std::set<std::u32string> added;
+    // Sources added by reference, in the order they joined the batch.
+    std::vector<ReferencedInput> referenced;
+};
+
+// Render where a module was named as "file:line" of the token's logical location. Added for --print-inputs.
+std::string site_text(const ast::Module &syntax, const ast::NodeSource &source) {
+    const auto &location = syntax.anchor(source).location;
+    return project::path_text(project::native_path(location.file)) + ":" + std::to_string(location.line);
+}
+
+// Load the module `name` when the batch lacks it and a search directory has it; true on a source failure.
+// Added for --print-inputs.
+bool add_module(const std::u32string &name, std::string site, Discovery &discovery, const FrontendRequest &request,
+                const DiagnosticSink &sink, Inputs &inputs) {
+    if (defined(inputs, name) || !discovery.added.insert(name).second) {
+        return false;
+    }
+    auto path = module_source(discovery.directories, name);
+    if (path.empty()) {
+        return false;
+    }
+    discovery.referenced.push_back({path, std::move(site)});
+    return process_file(path, request, sink, inputs);
+}
+
 // Add the modules the batch references but does not define, from the search directories, then the library,
 // including those they reference in turn.
-bool add_referenced(const FrontendRequest &request, const DiagnosticSink &sink, Inputs &inputs) {
-    auto directories = request.module_search_paths_;
-    directories.push_back(linking::library_directory());
-    std::set<std::u32string> added;
+bool add_referenced(const FrontendRequest &request, const DiagnosticSink &sink, Inputs &inputs, Discovery &discovery) {
+    discovery.directories = request.module_search_paths_;
+    discovery.directories.push_back(linking::library_directory());
     bool failed = false;
     for (std::size_t scanned = 0; scanned < inputs.size(); ++scanned) {
-        for (const auto &name : semantic::referenced_modules(inputs[scanned].syntax)) {
-            const auto path = defined(inputs, name) || !added.insert(name).second ? std::filesystem::path{}
-                                                                                  : module_source(directories, name);
-            failed = (!path.empty() && process_file(path, request, sink, inputs)) || failed;
+        for (const auto &[name, source] : semantic::referenced_modules(inputs[scanned].syntax)) {
+            auto site = site_text(inputs[scanned].syntax, source);
+            failed = add_module(name, std::move(site), discovery, request, sink, inputs) || failed;
         }
     }
     return failed;
+}
+
+// List paths one per line as given. Added for --print-inputs.
+void print_inputs(const std::span<const std::filesystem::path> paths) {
+    for (const auto &path : paths) {
+        std::cout << filename(path) << '\n';
+    }
+}
+
+// Print the batch's inputs: listed sources, then each source added by reference with the site that named it.
+// Added for --print-inputs.
+void list_batch(const std::span<const std::filesystem::path> paths, const Discovery &discovery,
+                const FrontendRequest &request) {
+    if (request.multiple_targets) {
+        std::cout << "[target " << request.project_target << "]\n";
+    }
+    print_inputs(paths);
+    for (const auto &input : discovery.referenced) {
+        std::cout << filename(input.path) << " (referenced at " << input.site << ")\n";
+    }
 }
 } // namespace
 
@@ -209,8 +264,14 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
     for (const auto &path : paths) {
         failed = process_file(path, request, sink, inputs) || failed;
     }
+    Discovery discovery;
     if (request.compile && !failed) {
-        failed = add_referenced(request, sink, inputs);
+        failed = add_referenced(request, sink, inputs, discovery);
+    }
+    // Stop before compilation and list the batch. Added for --print-inputs.
+    if (request.list_inputs) {
+        list_batch(paths, discovery, request);
+        return failed;
     }
     if (request.compile && !failed) {
         failed = compile_batch(std::move(inputs), request, sink);
@@ -218,16 +279,12 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
     return failed;
 }
 
-void print_inputs(const std::span<const std::filesystem::path> paths) {
-    for (const auto &path : paths) {
-        std::cout << filename(path) << '\n';
-    }
-}
-
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
-    FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check, !options.preprocess,
-                            options.verbose,  options.preprocessing, options.backend};
+    FrontendRequest request{
+        options.print_pp, options.print_ast,     options.parse_check, !options.preprocess || options.print_inputs,
+        options.verbose,  options.preprocessing, options.backend};
+    request.list_inputs = options.print_inputs; // Added for --print-inputs.
     request.print_source = options.print_source;
     if (options.output_explicit) {
         request.executable_output = options.output;

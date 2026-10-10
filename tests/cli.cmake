@@ -19,14 +19,29 @@ check_cli(help 0 "Usage: clau" "^$" --help)
 check_cli(short_help 0 "Usage: clau" "^$" -h)
 check_cli(version 0 "^clau [0-9]+\\.[0-9]+\\.[0-9]+\n$" "^$" --version)
 check_cli(no_inputs 2 "^$" "no input files")
-# --print-inputs lists checked inputs in order and never preprocesses or parses them.
+# --print-inputs parses the listed inputs, adds the modules they name as compilation would, and lists the batch:
+# listed sources in order, then each added source with the site that named it. Nothing is compiled.
 file(WRITE "${TEST_DIR}/unparsable.erl" "-module(unparsable). -include(\"absent.hrl\"). f( ->\n")
+file(WRITE "${TEST_DIR}/ref.erl" "-module(ref).\n-import(gen_tcp, [connect/3]).\n")
 check_cli(print_inputs_help 0 "--print-inputs" "^$" --help)
-check_cli(print_inputs 0 "^source with spaces.erl\nunparsable.erl\n-source.erl\n$" "^$"
-    --print-inputs "source with spaces.erl" unparsable.erl -- -source.erl)
+check_cli(print_inputs 0 "^source with spaces.erl\n-source.erl\n$" "^$"
+    --print-inputs "source with spaces.erl" -- -source.erl)
+check_cli(print_inputs_library 0 "^ref\\.erl\n[^\n]*/gen_tcp\\.erl \\(referenced at ref\\.erl:2\\)\n" "^$"
+    --print-inputs --print-ast ref.erl)
+check_cli(print_inputs_parse_error 1 "^unparsable\\.erl\n$" "error:" --print-inputs unparsable.erl)
 check_cli(print_inputs_missing 1 "^$" "cannot access" --print-inputs missing.erl)
 check_cli(print_inputs_output 2 "^$" "cannot be used with.*--print-inputs" --print-inputs -o out unparsable.erl)
 check_cli(print_inputs_backend 2 "^$" "compilation switches" --print-inputs -O2 unparsable.erl)
+# --print-env validates the whole command and prints it as TOML with effective settings, never reading sources.
+check_cli(print_env_help 0 "--print-env" "^$" --help)
+check_cli(print_env 0 "^# clau compile environment[^\n]*\ncommand = \\[\n  \"clau\",\n  \"--print-env\",\n  \"-O2\",.*actions = \\[\n  \"compile\",\n\\].*sources = \\[\n  \"[^\n]*/unparsable\\.erl\",\n\\].*include_dirs = \\[\n  \"[^\n]*/inc\",\n\\]\ndefines = \\[\n  \"V=1\",\n\\].*target_triple = \"[^\"\n]+\"\noptimization = \"O2\"\ntype_specialization = true\n.*emit = \"none\"\nartifact_dir = \"[^\n]*/build/aot\"\n$" "^$"
+    --print-env -O2 -DV=1 -I inc unparsable.erl)
+check_cli(print_env_link 0 "actions = \\[\n  \"link\",.*entry = \"example:main\"\noutput = \"[^\n]*/app(\\.exe)?\"\nlinker = \"[^\n]*\"\nruntime_library = \"[^\n]+\"" "^$"
+    --print-env -o app --entry example "source with spaces.erl")
+check_cli(print_env_frontend 0 "actions = \\[\n  \"print-pp\",\n  \"print-ast\",\n\\]" "^$" --print-env --print-ast --print-pp unparsable.erl)
+check_cli(print_env_quoted 0 "defines = \\[\n  \"Q=\\\\\"x\\\\\"\",\n\\]" "^$" --print-env "-DQ=\"x\"" unparsable.erl)
+check_cli(print_env_missing 1 "^$" "cannot access" --print-env missing.erl)
+check_cli(print_env_new_project 2 "^$" "--print-env cannot be combined with --new-project" --print-env --new-project p.toml)
 check_cli(unknown_option 2 "^$" "unknown option" --unknown)
 check_cli(missing_output 2 "^$" "expected a path after" -o)
 check_cli(duplicate_output 2 "^$" "more than once" -o first -o second source.erl)

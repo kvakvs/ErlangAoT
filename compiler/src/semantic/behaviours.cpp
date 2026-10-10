@@ -95,18 +95,10 @@ std::string behaviour_info_source(const ast::Module &syntax) {
            list_source(optional_callbacks(syntax)) + ".\n";
 }
 
-std::vector<std::u32string> declared_behaviours(const ast::Module &syntax) {
-    std::vector<std::u32string> result;
-    for (const auto &id : syntax.forms()) {
-        const auto *attribute = std::get_if<ast::GenericAttribute>(&syntax.form(id).value);
-        const bool behaviour =
-            attribute && (attribute->name.name == U"behaviour" || attribute->name.name == U"behavior");
-        const auto *name = behaviour ? std::get_if<ast::Atom>(&syntax.term(attribute->value).value) : nullptr;
-        if (name) {
-            result.push_back(name->name);
-        }
-    }
-    return result;
+const ast::Atom *behaviour_name(const ast::Module &syntax, const ast::Form &form) {
+    const auto *attribute = std::get_if<ast::GenericAttribute>(&form.value);
+    const bool behaviour = attribute && (attribute->name.name == U"behaviour" || attribute->name.name == U"behavior");
+    return behaviour ? std::get_if<ast::Atom>(&syntax.term(attribute->value).value) : nullptr;
 }
 
 void index_callbacks(Module &module, const Reporter &out) {

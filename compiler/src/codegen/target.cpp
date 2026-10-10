@@ -51,8 +51,7 @@ const llvm::Target *find_target(const llvm::Triple &triple, CompilationResult &r
 // Prefer detected CPU capabilities only for the native triple; foreign targets use LLVM's generic baseline.
 std::unique_ptr<llvm::TargetMachine> create_machine(const CompilationRequest &request, CompilationResult &result) {
     const llvm::Triple host(llvm::Triple::normalize(llvm::sys::getProcessTriple()));
-    const llvm::Triple triple(request.target_triple.empty() ? host.str()
-                                                            : llvm::Triple::normalize(request.target_triple));
+    const llvm::Triple triple(resolve_triple(request.target_triple));
     const auto *target = find_target(triple, result);
     if (!target) {
         return nullptr;
@@ -107,6 +106,10 @@ std::string object_extension(const Compilation &compilation) {
         throw std::logic_error("object extension requires a configured target");
     }
     return machine->getTargetTriple().isOSBinFormatCOFF() ? ".obj" : ".o";
+}
+
+std::string resolve_triple(const std::string &requested) {
+    return llvm::Triple::normalize(requested.empty() ? llvm::sys::getProcessTriple() : requested);
 }
 
 std::string target_triple(const Compilation &compilation) {

@@ -59,6 +59,17 @@ check(print_inputs_all 0 "^\\[target app\\]\n[^\n]*/shared\\.erl\n\\[target test
     --project project.toml --print-inputs)
 check(print_inputs_target 0 "^[^\n]*/shared\\.erl\n$" "^$" --project project.toml --target tests --print-inputs)
 check(print_inputs_entry 2 "^$" "cannot be used with.*--print-inputs" --project project.toml --print-inputs --entry shared)
+# Modules named but not listed are found in source_search_paths, in turn naming further modules.
+file(WRITE "${TEST_DIR}/main.erl" "-module(main).\n-export([main/1]).\nmain(_) -> helper:f().\n")
+file(WRITE "${TEST_DIR}/lib/helper.erl" "-module(helper).\n-export([f/0]).\nf() -> deep:g().\n")
+file(WRITE "${TEST_DIR}/lib/deep.erl" "-module(deep).\n-export([g/0]).\ng() -> ok.\n")
+file(WRITE "${TEST_DIR}/refs.toml" "schema_version=1\n[[targets]]\nname='refs'\nsources=['main.erl']\n[targets.options]\nsource_search_paths=['lib']\n")
+check(print_inputs_referenced 0 "^[^\n]*/main\\.erl\n[^\n]*/lib/helper\\.erl \\(referenced at [^\n]*/main\\.erl:3\\)\n[^\n]*/lib/deep\\.erl \\(referenced at [^\n]*/lib/helper\\.erl:3\\)\n$" "^$"
+    --project refs.toml --print-inputs)
+check(print_env_project 0 "^# clau compile environment[^\n]*\ncommand = .*\n\n\\[\\[targets\\]\\]\nname = \"app\"\nproject = \"[^\n]*/project\\.toml\"\nsources = \\[\n  \"[^\n]*/shared\\.erl\",\n\\].*defines = \\[\n  \"VALUE=1\",\n\\].*\n\n\\[\\[targets\\]\\]\nname = \"tests\".*defines = \\[\n  \"VALUE=2\",\n\\]" "^$"
+    --print-env --project project.toml)
+check(print_env_project_emit 0 "^# clau compile environment.*name = \"tests\".*emit = \"obj\"\nartifact_dir = \"[^\n]*/build/aot/[^/\n]+\"\n$" "^$"
+    --print-env --emit obj --project project.toml --target tests)
 check(default_output 1 "^$" "no entry point: no module exports main/1" --project project.toml --target app -o sentinel)
 check(verbose_project 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n\\[parse\\] [^\n]*shared.erl\n\\[comp\\].*phase=emission.*target=\"tests\""
     --verbose --project project --target tests)

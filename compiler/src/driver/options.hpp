@@ -34,7 +34,10 @@ struct Options {
     bool print_ast = false;
     // Parse the expanded token stream and emit it as Erlang source (docs/compile.md#source-printing).
     bool print_source = false;
-    // List the selected input files and stop before reading them; takes precedence over other actions.
+    // Print the resolved compile environment as TOML instead of running the validated command.
+    bool print_env = false;
+    // Parse inputs and add referenced modules, then list the batch instead of compiling; replaces other actions.
+    // Added for --print-inputs.
     bool print_inputs = false;
     // Request syntax diagnostics without requiring tree output.
     bool parse_check = false;
@@ -47,7 +50,7 @@ std::optional<std::string> parse_options(std::span<char *> remaining, Options &o
 // Process every input using an independent frontend ownership context.
 int process_inputs(const Options &options);
 // Execute independent project batches and publish only after the selected invocation succeeds.
-int run_project(const Options &options);
+int run_project(const Options &options, std::span<char *const> arguments);
 // Check physical input paths before running the selected frontend mode.
 bool validate_inputs(const std::vector<std::filesystem::path> &inputs);
 } // namespace clause::cli

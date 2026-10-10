@@ -18,6 +18,8 @@ std::string find_linker(const std::optional<std::filesystem::path> &linker);
 // Run the driver to completion, capturing its output in `log`; failure to start it throws.
 LinkerRun run_linker(const std::string &program, std::span<const std::string> arguments,
                      const std::filesystem::path &log);
+// The runtime archive a link would use (explicit, else the one beside this compiler), unchecked.
+std::filesystem::path runtime_library_path(const std::optional<std::filesystem::path> &library);
 // Resolve the runtime archive: an explicit path, else the library built beside this compiler.
 std::filesystem::path find_runtime_library(const std::optional<std::filesystem::path> &library);
 // Require every native object in the runtime archive to match the target architecture and format.

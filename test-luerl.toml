@@ -13,7 +13,7 @@ name = "luerl"
 sources = [
   "references/otp/lib/kernel/src/application.erl",
   "references/otp/lib/stdlib/src/supervisor.erl",
-  "references/luerl/**/*.erl"
+  "references/luerl/src/**/*.erl"
 ]
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.

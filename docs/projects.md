@@ -70,15 +70,20 @@ clau --new-project <filename>
 - `-o/--output` links the target to that path instead of its `output`
   ([linking](executables.md#linking)); it requires exactly one selected target.
 - `--verbose` traces `[pp]` files/includes and `[parse]` sources on stderr.
-- `--print-inputs` prints each selected target's sources after
-  [discovery](#paths-and-discovery) (globs, `source_dirs`, literal sources found
-  through `source_search_paths`) as absolute paths, one per line, and exits
-  without processing them. With several targets, each list follows a
-  `[target <name>]` line. Modules that would join the batch later because a
-  source names them are not listed: finding them needs parsing. Positional
-  inputs are checked for readability and printed as given. It replaces other
-  check/print actions and conflicts like them with `-o`, `--entry` and
-  compilation switches.
+- `--print-inputs` runs each selected target up to compilation: it preprocesses
+  and parses the sources after [discovery](#paths-and-discovery), then adds the
+  modules they name from `source_search_paths` and the library, as a build
+  does. It prints the target's sources (absolute paths), one per line, then each
+  added source as `<path> (referenced at <file>:<line>)`, the earliest place in
+  the referring module that names it; added sources are searched in turn.
+  Nothing is compiled. With several targets, each list follows a
+  `[target <name>]` line. Positional inputs print as given. Diagnostics go to
+  stderr; a parse error stops adding referenced modules and exits 1. It
+  replaces other check/print actions and conflicts like them with `-o`,
+  `--entry` and compilation switches.
+- `--print-env` prints the whole invocation as TOML: one `[[targets]]` table per
+  selected target with its resolved sources, search/include directories and
+  effective options ([environment report](compile.md#environment-report)).
 - Exit 2: usage errors and unknown targets. Exit 1: manifest, discovery,
   frontend or creation failures. Exit 0: success (warnings allowed).
 
