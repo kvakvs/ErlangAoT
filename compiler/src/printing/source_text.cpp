@@ -1,5 +1,6 @@
 #include "source_printer.hpp"
 #include "token_text.hpp"
+#include <algorithm>
 #include <array>
 #include <ostream>
 #include <utility>
@@ -46,8 +47,8 @@ bool preprocessor_start(const ast::Form &form) {
 // Comment lines above a form, one per note line.
 std::string comments(const SourceNotes &notes, const ast::Form &form) {
     std::string result;
-    if (notes.form) {
-        for (const auto &line : notes.form(form)) {
+    if (notes.form_) {
+        for (const auto &line : notes.form_(form)) {
             result += "%% " + line + '\n';
         }
     }
@@ -102,7 +103,8 @@ namespace clause {
 void print_source(std::ostream &output, const ast::Module &module, const SourceNotes &notes) {
     const printing::SourcePrinter printer(module, notes);
     const ast::Form *previous = nullptr;
-    for (const auto &id : module.forms()) {
+    const auto forms = module.forms();
+    for (const auto &id : forms.first(forms.size() - std::min(notes.omitted_, forms.size()))) {
         const auto &form = module.form(id);
         if (!previous && printing::preprocessor_start(form)) {
             continue;
@@ -120,14 +122,23 @@ std::string expression_source(const ast::Module &module, const ast::ExprId &id) 
     return printing::SourcePrinter(module, notes).expression(id, {.annotated = false});
 }
 
+namespace {
+// Decode valid UTF-8 text.
+std::u32string decoded(std::string_view text) {
+    std::u32string result;
+    for (std::size_t at = 0; at < text.size();) {
+        result += printing::next_code(text, at);
+    }
+    return result;
+}
+} // namespace
+
 std::string atom_source(std::string_view name) {
     // Names come from decoded atoms, so they are valid UTF-8.
-    std::u32string decoded;
-    for (std::size_t at = 0; at < name.size();) {
-        decoded += printing::next_code(name, at);
-    }
-    return printing::atom_text({decoded});
+    return printing::atom_text({decoded(name)});
 }
+
+std::string string_source(std::string_view text) { return printing::literal_text(TokenKind::string, decoded(text)); }
 
 std::string operator_source(ast::BinaryOperator operation) { return printing::operator_text(operation); }
 

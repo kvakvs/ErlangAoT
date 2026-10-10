@@ -530,3 +530,11 @@ Host and tool gotchas:
   unicode sources: build/plan11/fmt.escript now writes unicode:characters_to_binary. AGENTS.md (user, 2026-10-10): struct
   fields also take trailing underscore; rename fields being worked on. Scripts build/plan11-step65a/*.cmd (-j 24,
   ctest 16 slots).
+- 65B (2026-10-10, module_info): OTP facts: exports = exported functions in DEFINITION order then predefined;
+  attributes drop module/export/import/types/specs/records/compile/export_type/optional_callbacks/export_record/
+  docs/feature, wrap non-lists, prepend {vsn,[md5 as 128-bit int]} when no -vsn; -nominal kept in abstract format
+  (Clause drops it); module_info local calls/funs allowed, export of it warns, definition errors; duplicate export
+  is a warning. module_info/0 must not call module_info/1 locally: literal-key calls made specialization variants
+  that broke codegen_inspection (normal==disabled) and patternmatch_facts dominance. Predefined functions get no
+  debug scope (else -g maps them onto real-file lines). Synthetic lexer buffer takes the module's physical name so
+  IR "Erlang source files" lists real files only.

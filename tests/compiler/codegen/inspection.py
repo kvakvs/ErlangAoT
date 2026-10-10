@@ -65,9 +65,20 @@ assert [re.search(r'stage=(\w+)', head)[1] for head, _ in parts] == ['before', '
 assert 'clausev1_616e73776572_70726976617465_0' in parts[2][1]
 assert 'clausev1_616e73776572_70726976617465_0' not in parts[3][1]
 assert not both.stderr
+
+
+def own_functions(ir):
+    """The fixture's own function bodies with value and label numbering dropped: the compiler-generated
+    module_info/1 has atom checks specialization removes, which also renumbers later functions."""
+    bodies = re.findall(r'^define .*?^}', ir, re.M | re.S)
+    generated = '_6d6f64756c655f696e666f_'  # hex of module_info in the symbol
+    return [re.sub(r'([A-Za-z_.])\d+\b', r'\1', body) for body in bodies if generated not in body.split('\n', 1)[0]]
+
+
 normal = run('-O2', '--print-ir', '--print-optimized-ir', 'answer.erl').stdout
 disabled = run('--no-type-specialization', '-O2', '--print-ir', '--print-optimized-ir', 'answer.erl').stdout
-assert normal == disabled  # No removable representation checks exist in the supported source subset.
+# No removable representation checks exist in the fixture's own source.
+assert own_functions(normal) == own_functions(disabled)
 assert run('--print-ir', '--print-ir', 'answer.erl').stdout == run('--print-ir', 'answer.erl').stdout
 
 (work / 'quoted.erl').write_text("-module('line\\nbreak'). value() -> 1.\n", encoding='utf-8')

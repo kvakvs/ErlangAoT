@@ -46,4 +46,5 @@ check(plain_module 1 "^$" "no entry point: no module exports main/1" -o out plai
 check(missing_main 1 "^$" "^error: nomain:1:1: escript does not define main/1\n$" nomain)
 check(illegal_mode 1 "^$" "^error: badmode:3:1: illegal escript mode attribute" badmode)
 file(WRITE "${WORK}/mode.erl" "-module(mode).\n-mode(compile).\n")
-check(mode_outside_escript 1 "^$" "mode.erl:2:1: \\[behavior-changing attributes\\] notimpl" mode.erl)
+# Outside an escript -mode is an ordinary attribute, kept for module_info(attributes) as in OTP.
+check(mode_outside_escript 0 "^$" "^$" mode.erl)

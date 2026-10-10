@@ -43,6 +43,10 @@ std::string input_text(const Inference &inferred, const Summary &summary) {
 
 void trace_inference(const Inference &inferred, const CallGraph &calls, const DiagnosticSink &sink, const int step) {
     for (const auto function : calls.order) {
+        // OTP's predefined functions are the compiler's own code.
+        if (predefined_form(*function.module, function.function->form)) {
+            continue;
+        }
         const auto &summary = inferred.functions.at(function.function);
         sink("[impldebug " + std::to_string(step) + "] " + escaped(function.module->file) + " inference " +
              escaped(utf8(function.module->name)) + ":" + escaped(utf8(function.function->key.name)) + "/" +

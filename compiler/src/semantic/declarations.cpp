@@ -3,7 +3,9 @@
 #include "escript.hpp"
 #include "records.hpp"
 #include "symbols.hpp"
+#include <algorithm>
 #include <charconv>
+#include <clause/compiler/printing.hpp>
 #include <clause/compiler/source.hpp>
 
 namespace clause::semantic {
@@ -38,6 +40,23 @@ std::optional<std::size_t> arity(const Integer &value) {
         return {};
     }
     return result;
+}
+
+bool defines_function(const ast::Module &syntax, const FunctionKey &key) {
+    return std::ranges::any_of(syntax.forms(), [&](const auto &id) {
+        const auto *function = std::get_if<ast::Function>(&syntax.form(id).value);
+        return function && function->name.name == key.name && function->clauses.front().arguments.size() == key.arity;
+    });
+}
+
+bool predefined_form(const Module &module, const ast::FormId &id) {
+    const auto forms = module.syntax->forms();
+    return std::ranges::contains(forms.last(std::min(module.predefined_, forms.size())), id);
+}
+
+const ast::TokenOrigin &attribute_name(const ast::Module &syntax, const ast::Form &form) {
+    const auto extent = syntax.extent(form.source);
+    return extent.size() > 1 ? extent[1] : syntax.anchor(form.source);
 }
 
 std::optional<std::size_t> source_function(const Module &module, const FunctionKey &key) {
@@ -75,6 +94,10 @@ void function(Module &module, const ast::FormId &id, const ast::Function &syntax
         // OTP expands record_info/2 at compile time, so the module already defines it; index it anyway.
         report(module, &source, "function record_info/2 already defined", out);
     }
+    if (key.name == U"module_info" && key.arity < 2 && !predefined_form(module, id)) {
+        // The compiler adds module_info/0,1 to every module (the frontend skipped this arity).
+        report(module, &source, "function module_info/" + std::to_string(key.arity) + " already defined", out);
+    }
     if (!module.lookup.emplace(key, module.functions.size()).second) {
         report(module, &source, "duplicate function " + utf8(key.name) + "/" + std::to_string(key.arity), out);
         return;
@@ -83,21 +106,25 @@ void function(Module &module, const ast::FormId &id, const ast::Function &syntax
 }
 
 // Resolve each export after all functions are indexed, allowing forward declarations.
-void export_function(Module &module, const ast::NameArity &value, const ast::NodeSource &source, const Reporter &out) {
+// Diagnostics point at the attribute name, as erl_lint's do.
+void export_function(Module &module, const ast::NameArity &value, const ast::TokenOrigin &origin, const Reporter &out) {
     const auto count = arity(value.arity);
     if (!count) {
-        report(module, &source, "export arity must be in 0..255", out);
+        report(origin, "export arity must be in 0..255", out);
         return;
     }
     const auto found = source_function(module, {value.name.name, *count});
     if (!found) {
-        report(module, &source, "export of undefined function " + utf8(value.name.name) + "/" + std::to_string(*count),
-               out);
+        report(origin, "export of undefined function " + utf8(value.name.name) + "/" + std::to_string(*count), out);
         return;
     }
     auto &entry = module.functions[*found];
-    if (entry.exported) {
-        report(module, &source, "duplicate export " + utf8(value.name.name) + "/" + std::to_string(*count), out);
+    const bool module_info = value.name.name == U"module_info" && *count < 2;
+    if (entry.exported || module_info) {
+        // OTP only warns about a repeated export, including one of module_info/0,1, which are always exported.
+        report(origin,
+               "function " + atom_source(utf8(value.name.name)) + "/" + std::to_string(*count) + " already exported",
+               out, Severity::warning);
     }
     entry.exported = true;
 }
@@ -135,9 +162,20 @@ void index_exports(Module &module, const Reporter &out) {
         const auto &form = syntax.form(id);
         if (const auto *exports = std::get_if<ast::ExportAttribute>(&form.value)) {
             for (const auto &value : exports->functions) {
-                export_function(module, value, form.source, out);
+                export_function(module, value, attribute_name(syntax, form), out);
             }
         }
+    }
+}
+
+// Export the functions the frontend generated (OTP's predefined functions); behaviour_info/1 among them is hidden
+// from the module's own source.
+void index_predefined(Module &module) {
+    const auto found = module.lookup.find({U"behaviour_info", 1});
+    module.behaviour_info_ =
+        found != module.lookup.end() && predefined_form(module, module.functions[found->second].form);
+    for (auto &function : module.functions) {
+        function.exported = function.exported || predefined_form(module, function.form);
     }
 }
 } // namespace
@@ -147,9 +185,10 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
     auto module = std::make_unique<Module>();
     module->syntax = &syntax;
     module->file = std::move(file);
-    module->behaviour_info_ = options.behaviour_info_;
+    module->predefined_ = options.predefined_;
     index_name(*module, out);
     index_functions(*module, out);
+    index_predefined(*module);
     index_exports(*module, out);
     index_records(*module, out);
     index_callbacks(*module, out);

@@ -453,6 +453,11 @@
   module's own exports, local calls, funs and specs; `semantic::check_behaviours` runs after indexing the batch and
   reports erl_lint's behaviour warnings at the attribute name token (`report(TokenOrigin)`). `-behaviour(M)` counts
   as a reference for library loading.
+- Predefined functions (step 65B): `driver/predefined::add_predefined` appends `behaviour_info/1` and
+  `module_info/0,1` (literal data from `semantic::module_info_source`; md5 = `codegen::md5` of `print_source`) and
+  returns the count of appended forms (`CompilationInput::predefined_` → `Module::predefined_`,
+  `semantic::predefined_form`); they are exported, have no debug scope, and `--print-types` omits them
+  (`SourceNotes::omitted_`). Generic attributes are data except `on_load`, `nifs`, non-inert `-compile`.
 - Startup: a resolved entry sets `CompilationRequest::startup`; `codegen/startup` appends a
   module (after the inputs, no syntax; artifact `clausev1_start`) whose `main` hands a
   `StartupDescriptor` to runtime `CLAUSE_main_v1`. The runtime ABI-checks all descriptors,

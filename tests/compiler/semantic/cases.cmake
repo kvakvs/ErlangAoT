@@ -22,7 +22,8 @@ semantic_case(empty "" 1 "empty.erl:1:1.*missing module")
 semantic_case(duplicate_module "-module(a). -module(b)." 1 "duplicate module")
 semantic_case(duplicate_function "-module(a). f() -> 1. g() -> 2. f() -> 3." 1 "duplicate function f/0")
 semantic_case(undefined_export "-module(a). -export([f/1]). f() -> 1." 1 "undefined function f/1")
-semantic_case(duplicate_export "-module(a). -export([f/0,f/0]). f() -> 1." 1 "duplicate export f/0")
+semantic_case(duplicate_export "-module(a). -export([f/0,f/0]). f() -> 1." 0
+    "duplicate_export.erl:1:14: function f/0 already exported")
 semantic_case(huge_export "-module(a). -export([f/99999999999999999999999])." 1 "arity must be in 0..255")
 semantic_case(negative_export "-module(a). -export([f/-1])." 1 "negative_export.erl:1:28: bad attribute value")
 semantic_case(unicode "-module('λ_mod'). -export(['quoted name'/0]). 'quoted name'() -> 42." 0 "^$")
@@ -235,7 +236,8 @@ semantic_case(compile_option "-module(a). -compile(export_all). f() -> 1." 1 "be
 semantic_case(transform "-module(a). -compile({parse_transform,x}). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(compile_nowarn "-module(a). -compile([nowarn_deprecated_catch, nowarn_unused_function]). f() -> 1." 0 "^$")
 semantic_case(on_load "-module(a). -on_load(f/0). f() -> 1." 1 "behavior-changing attributes")
-semantic_case(unknown_attribute "-module(a). -custom(1). f() -> 1." 1 "behavior-changing attributes")
+semantic_case(custom_attribute "-module(a). -custom(1). f() -> 1." 0 "^$")
+semantic_case(nifs "-module(a). -nifs([f/0]). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(parameterized "-module(a, [X]). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(import "-module(a). -import(b,[f/0]). g() -> 1." 1 "behavior-changing attributes")
 semantic_case(unused "-module(a). -export([f/0]). f() -> 1. unused() -> fun erlang:apply/2." 1 "dynamic calls")
@@ -374,7 +376,7 @@ semantic_case(callback_optional_duplicate "-module(a). -callback run(A) -> A. -o
 # The behaviour_info/1 generated from -callback is invisible to the module's own source, as in OTP's erl_lint; the
 # remote call of it and its diagnostics against OTP live in tests/fixtures/lint and executables_behaviours.
 semantic_case(behaviour_info_export "-module(a). -export([behaviour_info/1]). -callback run() -> ok." 1
-    "behaviour_info_export.erl:1:13: export of undefined function behaviour_info/1")
+    "behaviour_info_export.erl:1:14: export of undefined function behaviour_info/1")
 semantic_case(behaviour_info_local "-module(a). -export([f/0]). -callback run() -> ok. f() -> behaviour_info(callbacks)."
     1 "undefined function a:behaviour_info/1")
 semantic_case(behaviour_info_fun "-module(a). -export([f/0]). -callback run() -> ok. f() -> fun behaviour_info/1." 1

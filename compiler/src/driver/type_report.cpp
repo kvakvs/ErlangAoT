@@ -272,20 +272,22 @@ void print_types(const Analysis &analysis, const codegen::CompilationRequest &re
     const auto &inferred = *analysis.inferred;
     const auto specified = specifications(*analysis.declared);
     for (const auto &module : analysis.modules) {
-        std::cout << "%%\n" << "%% module " << quote_text(utf8(module->name)) << " source=" << quote_text(module->file)
+        std::cout << "%%\n"
+                  << "%% module " << quote_text(utf8(module->name)) << " source=" << quote_text(module->file)
                   << " target=" << quote_text(request.project_target)
                   << " declared=" << completeness(analysis.declared->graph)
                   << " inferred=" << completeness(inferred.graph) << "\n%%\n";
         const auto owners = expression_owners(*module);
         const auto records = record_fields(*module);
         const SourceNotes notes{
-            .expression =
+            .expression_ =
                 [&](const ast::Expression &expression) {
                     const auto owner = owners.find(&expression);
                     return expression_note(*module->syntax, inferred, expression,
                                            owner == owners.end() ? nullptr : &owner->second, records);
                 },
-            .form = [&](const ast::Form &form) { return function_note(*module, analysis, specified, records, form); }};
+            .form_ = [&](const ast::Form &form) { return function_note(*module, analysis, specified, records, form); },
+            .omitted_ = module->predefined_};
         print_source(std::cout, *module->syntax, notes);
         std::cout << '\n';
     }

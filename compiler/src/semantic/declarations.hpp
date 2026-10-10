@@ -152,15 +152,17 @@ struct Module {
     std::map<std::u32string, const Module *> peers = {};
     // Escript sources implicitly export main/1, accept -mode and use escript exit semantics.
     bool escript = false;
-    // behaviour_info/1 was generated from the -callback declarations (OTP's predefined function) and is exported.
+    // The number of trailing forms the frontend generated: OTP's predefined functions, always exported.
+    std::size_t predefined_ = 0;
+    // behaviour_info/1 is among them, generated from the -callback declarations.
     bool behaviour_info_ = false;
 };
 
 struct IndexOptions {
     // The source began with an escript header.
     bool escript_ = false;
-    // The frontend appended the behaviour_info/1 generated from the module's -callback declarations.
-    bool behaviour_info_ = false;
+    // The number of trailing forms the frontend generated (OTP's predefined functions).
+    std::size_t predefined_ = 0;
 };
 
 using Reporter = std::function<void(const Diagnostic &)>;
@@ -173,6 +175,12 @@ void report(const ast::TokenOrigin &origin, std::string message, const Reporter 
 // Index declarations and validate the whole module before any lowering occurs.
 std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &reporter,
                               IndexOptions options = {});
+// Whether the form is one of OTP's predefined functions the frontend generated.
+bool predefined_form(const Module &module, const ast::FormId &id);
+// An attribute's name token, where erl_lint locates attribute diagnostics: `export` of -export([...]).
+const ast::TokenOrigin &attribute_name(const ast::Module &syntax, const ast::Form &form);
+// Whether the module's syntax defines the function itself.
+bool defines_function(const ast::Module &syntax, const FunctionKey &key);
 // The index of a function the module's own source may name; OTP's predefined behaviour_info/1 is not one.
 std::optional<std::size_t> source_function(const Module &module, const FunctionKey &key);
 // Parse an Erlang declaration arity without narrowing arbitrary precision integers.

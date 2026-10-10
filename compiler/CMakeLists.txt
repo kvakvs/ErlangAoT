@@ -48,7 +48,7 @@ add_subdirectory(src/project)
 target_link_libraries(clau PRIVATE clause_project)
 
 # Keep LLVM headers and representation private behind the shared compilation backend.
-add_library(clause_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp src/codegen/module_atoms.cpp src/codegen/module_registration.cpp src/codegen/startup.cpp src/codegen/lowering_match.cpp src/codegen/lowering_immediates.cpp src/codegen/lowering_walk.cpp src/codegen/lowering_comprehensions.cpp src/codegen/lowering_guards.cpp
+add_library(clause_codegen STATIC src/codegen/sdk.cpp src/codegen/digest.cpp src/codegen/compilation.cpp src/codegen/module_atoms.cpp src/codegen/module_registration.cpp src/codegen/startup.cpp src/codegen/lowering_match.cpp src/codegen/lowering_immediates.cpp src/codegen/lowering_walk.cpp src/codegen/lowering_comprehensions.cpp src/codegen/lowering_guards.cpp
     src/codegen/specialization.cpp src/codegen/specialization_analysis.cpp src/codegen/integer_guards.cpp
     src/codegen/specialization_cloning.cpp src/codegen/specialization_dispatch.cpp src/codegen/specialization_lowering.cpp
     src/codegen/result.cpp src/codegen/diagnostics.cpp src/codegen/target.cpp
@@ -64,7 +64,7 @@ target_link_libraries(clau PRIVATE clause_codegen)
 
 # Semantic analysis owns language identities without depending on LLVM representations.
 add_library(clause_semantic STATIC
-    src/semantic/declarations.cpp src/semantic/behaviours.cpp src/semantic/escript.cpp src/semantic/records.cpp src/semantic/native_records.cpp src/semantic/funs.cpp src/semantic/symbols.cpp
+    src/semantic/declarations.cpp src/semantic/behaviours.cpp src/semantic/module_info.cpp src/semantic/escript.cpp src/semantic/records.cpp src/semantic/native_records.cpp src/semantic/funs.cpp src/semantic/symbols.cpp
     src/semantic/bindings.cpp src/semantic/calls.cpp src/semantic/match_plan.cpp src/semantic/match_plan_containers.cpp src/semantic/match_plan_records.cpp src/semantic/match_plan_bits.cpp src/semantic/binary_options.cpp src/semantic/match_plan_maps.cpp src/semantic/pattern_reads.cpp
     src/semantic/binding_patterns.cpp src/semantic/binding_expressions.cpp
     src/semantic/pattern_analysis.cpp src/semantic/pattern_constants.cpp

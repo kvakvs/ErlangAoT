@@ -7,7 +7,7 @@ macro/include origins, and later inputs are still diagnosed.
 ## Module and call checks
 
 - Module declaration required and unique; function arities 0..255; no duplicate
-  definitions; every export exists and is listed once. Quoted/Unicode names keep
+  definitions; every export exists (a repeated export warns, as in OTP). Quoted/Unicode names keep
   their exact identity.
 - Every function is checked, including unused and unreachable code.
 - Calls resolve within the batch by module/name/arity. Remote calls (including
@@ -61,6 +61,46 @@ Plan 11 step 65A, following OTP's
   ([differences](differences.md#errors-stack-traces-and-reports)).
 - Evidence: `tests/fixtures/lint` (OTP-generated diagnostics, CTest
   `lint_diagnostics`), `executables_behaviours`, `semantic` CLI cases.
+
+## Predefined functions
+
+Plan 11 step 65B, following OTP's
+[modules](https://www.erlang.org/doc/system/modules.html) and
+`erl_internal:add_predefined_functions`. The frontend appends
+`module_info/0,1` to every compiled module (after a generated
+`behaviour_info/1`) as Erlang functions returning literal data
+(`driver/predefined`, `semantic/module_info`); `Module::predefined_` counts
+these trailing forms, which are always exported and left out of
+`--print-types`.
+
+- `module_info()` gives `[{module,_},{exports,_},{attributes,_},{compile,_},{md5,_}]`;
+  `module_info(Key)` also answers `functions`, `nifs` (`[]`) and `native`
+  (`false`), and raises `badarg` for any other key.
+- `exports`: the exported functions in definition order (escripts add
+  `main/1`), then `behaviour_info/1` when generated, `module_info/0`,
+  `module_info/1`. `functions`: every function in definition order, then the
+  same predefined ones.
+- `attributes`: every attribute except `module`, exports and imports,
+  type/spec/callback forms, records, `export_type`, `optional_callbacks`,
+  `export_record`, `compile`, `file`, documentation and `feature`, in source
+  order; a value that is not a list is wrapped in one (`-tags(a)` is
+  `{tags,[a]}`). Without `-vsn`, `{vsn,[N]}` comes first, `N` being `md5` read
+  as an unsigned big-endian integer, as OTP derives it.
+- `md5`: MD5 of the module's printed source (`print_source`: macros expanded,
+  includes inlined, comments and layout dropped). `compile`:
+  `[{version,ClauseVersion},{options,[]},{source,AbsolutePath}]`.
+- Unlike `behaviour_info/1`, the module's own source sees them: local calls
+  and `fun module_info/1` work. Defining either is an error
+  (`function module_info/0 already defined`); exporting one, like any repeated
+  export, only warns (`function module_info/0 already exported`).
+- Attributes are data; only `on_load`, `nifs` and non-inert `-compile`
+  options are rejected as behavior-changing.
+- The generated functions have no source line (OTP gives them none): no
+  debug locations, IR source comments, `--print-types` or `--impldebug`
+  entries. `module_info/0` holds the same literals as `module_info/1`, so it
+  makes no calls.
+- Evidence: `executables_module_info` (OTP stdout; derived values by shape),
+  `tests/fixtures/lint` cases `module_info_defined`, `exports_repeated`.
 
 ## Bindings
 

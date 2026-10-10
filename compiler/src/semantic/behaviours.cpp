@@ -70,20 +70,6 @@ std::vector<FunctionKey> optional_callbacks(const ast::Module &syntax) {
     return result;
 }
 
-// Whether the module's syntax defines the function itself.
-bool defines(const ast::Module &syntax, const FunctionKey &key) {
-    return std::ranges::any_of(syntax.forms(), [&](const auto &id) {
-        const auto *function = std::get_if<ast::Function>(&syntax.form(id).value);
-        return function && function->name.name == key.name && function->clauses.front().arguments.size() == key.arity;
-    });
-}
-
-// The attribute's name token, where erl_lint locates attribute diagnostics: `behaviour` of -behaviour(M).
-const ast::TokenOrigin &attribute_name(const ast::Module &syntax, const ast::Form &form) {
-    const auto extent = syntax.extent(form.source);
-    return extent.size() > 1 ? extent[1] : syntax.anchor(form.source);
-}
-
 // The function's name and arity as Erlang source text: name/arity.
 std::string function_text(const FunctionKey &key) {
     return atom_source(utf8(key.name)) + "/" + std::to_string(key.arity);
@@ -102,7 +88,7 @@ std::string list_source(const std::vector<FunctionKey> &keys) {
 
 std::string behaviour_info_source(const ast::Module &syntax) {
     const auto declared = callbacks(syntax);
-    if (declared.empty() || defines(syntax, behaviour_info())) {
+    if (declared.empty() || defines_function(syntax, behaviour_info())) {
         return {};
     }
     return "behaviour_info(callbacks) -> " + list_source(declared) + ";\nbehaviour_info(optional_callbacks) -> " +
@@ -124,12 +110,7 @@ std::vector<std::u32string> declared_behaviours(const ast::Module &syntax) {
 }
 
 void index_callbacks(Module &module, const Reporter &out) {
-    const auto found = module.lookup.find(behaviour_info());
-    if (found == module.lookup.end()) {
-        return;
-    }
-    if (module.behaviour_info_) {
-        module.functions[found->second].exported = true;
+    if (module.behaviour_info_ || !module.lookup.contains(behaviour_info())) {
         return;
     }
     for (const auto &id : module.syntax->forms()) {

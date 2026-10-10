@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "entry": "module_info",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "info_target\n[{area,1},{scale,2},{module_info,0},{module_info,1}]\n[{vsn,\"2.1\"},\n {author,\"Clause\"},\n {behaviour,[info_shape]},\n {copyright,[{2026,clause}]},\n {tags,[alpha,beta]},\n {tags,[gamma]},\n {settings,[#{name => <<\"x\">>}]},\n {empty,[]},\n {deprecated,[{scale,2}]}]\n[{area,1},{scale,2},{helper,1},{module_info,0},{module_info,1}]\n[[],false]\n[module,exports,attributes,compile,md5]\n[{behaviour_info,1},{module_info,0},{module_info,1}]\n[{id,1},{module_info,0},{module_info,1}]\ninfo_plain\nmodule_info\n[{main,1},{module_info,0},{module_info,1}]\nderived_vsn\nmd5\ncompile\n{error,badarg}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "info_plain.erl": "6f84aaed216a54d967d7eea51d2f7e008517b9698fdffedf73ddfe7ff83dc6b5",
+    "info_shape.erl": "1a3afefe815904bbe0f349b77ae96614cf9b8e5fb2f1eb6f5d4d087355d921d1",
+    "info_target.erl": "f780048b42bdc9799ef98a8d4932a8d649cfbc55a4e88f6213c8d5604c526f74",
+    "module_info.erl": "471bfd445ac8ccf3b1f019b83f2f92ed97af476beb474969071fc4bf2197104f"
+  }
+}

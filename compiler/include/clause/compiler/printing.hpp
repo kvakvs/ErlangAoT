@@ -22,8 +22,10 @@ void print_ast(std::ostream &output, const ast::Module &module, std::size_t visi
 // line of a whole-line expression (a body expression or a case's scrutinee; the outermost one per line), and comment
 // lines (without the leading %) written above a form.
 struct SourceNotes {
-    std::function<std::optional<std::string>(const ast::Expression &)> expression = {};
-    std::function<std::vector<std::string>(const ast::Form &)> form = {};
+    std::function<std::optional<std::string>(const ast::Expression &)> expression_ = {};
+    std::function<std::vector<std::string>(const ast::Form &)> form_ = {};
+    // The number of trailing forms left out, such as the compiler's generated module_info/0,1.
+    std::size_t omitted_ = 0;
 };
 
 // Write every form of `module` as UTF-8 Erlang source, in form order. The text is the parsed syntax: macros are
@@ -36,6 +38,8 @@ std::string type_source(const ast::Module &module, const ast::TypeId &id);
 std::string term_source(const ast::Module &module, const ast::TermId &id);
 // An atom name (UTF-8) as source text, quoted when it needs to be.
 std::string atom_source(std::string_view name);
+// Valid UTF-8 text as an Erlang string literal.
+std::string string_source(std::string_view text);
 // The spelling of an operator.
 std::string operator_source(ast::BinaryOperator operation);
 std::string operator_source(ast::UnaryOperator operation);

@@ -36,12 +36,15 @@ run ([funs](funs.md)). Rejected with diagnostics even in unused functions:
 processes and messaging.
 Accepted attributes: `module`, `export`, `file`, tuple and native `record`,
 `export_record`, `import_record`, type/spec
-forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,
-`behaviour`/`behavior` ([behaviours](semantic.md#behaviours)),
+forms, `doc`/`moduledoc`, `behaviour`/`behavior` ([behaviours](semantic.md#behaviours)),
+any informational attribute (`vsn`, `author`, `copyright`, `deprecated`,
+`dialyzer`, user-defined `-name(Term)`; kept for
+[`module_info(attributes)`](semantic.md#predefined-functions)),
 `-compile` with `{no_auto_import, ...}` or warning-only `nowarn_*` options (for
-example `nowarn_deprecated_catch`) and `-import` of `erlang` guard BIFs. Other
-attributes (`on_load`, parse transforms, other
-`compile` options, parameterized modules) are rejected.
+example `nowarn_deprecated_catch`) and `-import` of `erlang` guard BIFs.
+`on_load`, `nifs`, parse transforms, other `compile` options, other `-import`
+lists and parameterized modules are rejected. Every module gets
+`module_info/0,1`.
 Sources starting with `#!` follow [escript rules](executables.md#escripts)
 (implicit module and `main/1` export, `-mode` accepted).
 Type/spec forms are analyzed but never change generated code. Syntax-only modes

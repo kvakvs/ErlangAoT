@@ -8,11 +8,8 @@
 
 namespace clause::semantic {
 namespace {
-// An explicit allowlist keeps executable or unknown attributes from silently changing semantics.
+// Attributes that would change semantics (on_load, nifs, parse transforms, imports) stay rejected.
 struct FormCapability {
-    // Escripts may carry -mode, which only selects how OTP's escript runs the script.
-    bool escript = false;
-
     std::string_view operator()(const ast::ModuleAttribute &value) const {
         return value.parameters ? "behavior-changing attributes" : "";
     }
@@ -35,12 +32,10 @@ struct FormCapability {
 
     std::string_view operator()(const ast::RecordDeclaration &) const { return {}; }
 
+    // Other attributes are data kept for module_info(attributes); -compile admits only inert options.
     std::string_view operator()(const ast::GenericAttribute &value) const {
-        constexpr std::array<std::u32string_view, 9> allowed{U"author",        U"vsn",         U"copyright",
-                                                             U"deprecated",    U"export_type", U"optional_callbacks",
-                                                             U"export_record", U"behaviour",   U"behavior"};
-        const bool mode = escript && value.name.name == U"mode";
-        return mode || std::ranges::contains(allowed, value.name.name) ? "" : "behavior-changing attributes";
+        constexpr std::array<std::u32string_view, 3> changing{U"on_load", U"nifs", U"compile"};
+        return std::ranges::contains(changing, value.name.name) ? "behavior-changing attributes" : "";
     }
 };
 
@@ -247,7 +242,7 @@ void function(const Module &module, const Function &function, const ast::Functio
 void check_capabilities(const Module &module, const Reporter &out, const unsigned word_bits) {
     for (const auto &id : module.syntax->forms()) {
         const auto &form = module.syntax->form(id);
-        const auto reason = std::visit(FormCapability{module.escript}, form.value);
+        const auto reason = std::visit(FormCapability{}, form.value);
         if (!reason.empty() && !service_metadata(*module.syntax, form.value)) {
             unsupported(module, form.source, reason, out);
         }

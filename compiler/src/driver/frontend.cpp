@@ -70,21 +70,29 @@ void print_parsed(const FrontendRequest &request, const ast::Module &module) {
     }
 }
 
-// Consume a parsing pass and dispatch successful modules to the requested final stage.
-bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
-                     const std::filesystem::path &path, Inputs &inputs) {
-    ParserSession parser;
+// Feed every preprocessed event to the parser until EOF or a parser resource limit.
+void parse_events(PreprocessorSession &session, const FrontendRequest &request, ParserSession &parser) {
     while (!parser.stopped()) {
         const auto event = session.next();
         if (!event) {
-            break;
+            return;
         }
         if (request.print_pp) {
             print_form(*event);
         }
         parser.consume(*event);
     }
-    const bool behaviour_info = request.compile && !parser.stopped() && add_behaviour_info(parser, session.features());
+}
+
+// Consume a parsing pass and dispatch successful modules to the requested final stage; compiled modules get OTP's
+// predefined functions.
+bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
+                     const std::filesystem::path &path, const bool escript, Inputs &inputs) {
+    ParserSession parser;
+    parse_events(session, request, parser);
+    const auto predefined = request.compile && !parser.stopped()
+                                ? add_predefined(parser, session.features(), path, escript)
+                                : std::size_t{0};
     auto result = std::move(parser).finish(session.features());
     for (const auto &diagnostic : result.diagnostics) {
         print_diagnostic(diagnostic, sink);
@@ -96,7 +104,8 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
     if (request.compile) {
         codegen::validate_input_limits(inputs, {}, &result.module);
         inputs.emplace_back(path, std::move(result.module));
-        inputs.back().behaviour_info_ = behaviour_info;
+        inputs.back().escript = escript;
+        inputs.back().predefined_ = predefined;
     }
     return false;
 }
@@ -127,12 +136,7 @@ bool process_module(const std::filesystem::path &path, const FrontendRequest &re
     PreprocessorSession session(source, preprocessing_options(request));
     if (request.parse_check || request.print_ast || request.print_source || request.compile) {
         trace_ingestion(request.verbose, "parse", path);
-        const auto before = inputs.size();
-        const bool failed = parse_and_print(session, request, sink, path, inputs);
-        if (inputs.size() > before) {
-            inputs.back().escript = escript;
-        }
-        return failed;
+        return parse_and_print(session, request, sink, path, escript, inputs);
     }
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<Diagnostic>(&*event)) {

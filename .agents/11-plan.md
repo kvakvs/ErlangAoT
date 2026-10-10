@@ -132,7 +132,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–L are closed; phase M continues with steps 65B, 66, 69
+behavior. Phases A–L are closed; phase M continues with steps 66, 69
 and 70 below.
 
 | Step | Title | Commit |
@@ -367,33 +367,38 @@ wrapped in a list (`{behaviour,[shape]}`, `{my_attr,[again]}`), and adds
 `module_info(bogus)` raises `badarg`.
 
 - Success criteria
-  - [ ] `module_info/0,1` are generated and exported like the 65A
+  - [x] `module_info/0,1` are generated and exported like the 65A
     `behaviour_info/1`, but, unlike it and as in OTP's erl_lint, local calls
     and `fun module_info/1` reach them, an explicit export only warns
     (`function module_info/0 already exported`), and a hand-written
     definition is an error (`function module_info/0 already defined`).
-  - [ ] `erlang:get_module_info/1,2` exists as a runtime builtin over
-    registered module data: `module`, `exports`, `attributes`, `compile`,
-    `md5`, `functions`, `nifs` (`[]`), `native` (`false`); the attribute
-    term is emitted with the module (descriptor or literal data) and survives
-    collection and copying like other literals.
-  - [ ] Accepted informational attributes: `vsn`, `author`, `copyright`,
+  - [x] `module_info/1` answers `module`, `exports`, `attributes`, `compile`,
+    `md5`, `functions`, `nifs` (`[]`) and `native` (`false`). Decided
+    2026-10-10: the generated functions return literal data, so no runtime
+    or ABI change is needed and `erlang:get_module_info/1,2` is not provided
+    (recorded in `docs/differences.md`).
+  - [x] Accepted informational attributes: `vsn`, `author`, `copyright`,
     `deprecated`, `behaviour`/`behavior`, `dialyzer` and any other
     user-defined literal attribute (`-my_attr(Term).`), all visible through
     `module_info(attributes)`; names reserved for behavior changes keep the
     capability diagnostic.
-  - [ ] Values that cannot match OTP (`md5` bytes, the `vsn` integer
+  - [x] Values that cannot match OTP (`md5` bytes, the `vsn` integer
     derived from it, `compile` `version`/`options`/`source`, `functions`
     entries OTP adds for its own generated code) have a documented Clause
     meaning and rows in `docs/differences.md`; contract in `docs/semantic.md`
-    (or a new `docs/modules.md`), backlog and step 73 updated.
+    (or a new `docs/modules.md`), backlog and step 73 updated. Generated
+    functions get no debug locations, source comments or `--print-types`
+    and `--impldebug` output.
 - Tests
-  - [ ] Executable golden: `module_info/0,1` keys, `exports`, `attributes`
+  - [x] Executable golden: `module_info/0,1` keys, `exports`, `attributes`
     with `-vsn`, multiple custom attributes and non-list values, remote and
     `apply/3` calls, `badarg` for an unknown key; values that differ
     (`md5`, `compile`, missing-`vsn` integer) are checked by shape only.
-  - [ ] Lint goldens (`tests/fixtures/lint`) for the diagnostics OTP shares
+  - [x] Lint goldens (`tests/fixtures/lint`) for the diagnostics OTP shares
     (hand-written definition, explicit export); CLI cases for the rest.
+- Evidence (2026-10-10): `executables_module_info` (OTP 29.1.1 stdout),
+  lint cases `module_info_defined`, `exports_repeated`; fresh fast CTest and
+  check-quality ([validation](../docs/validation.md#history)).
 
 <a id="step-66"></a>
 

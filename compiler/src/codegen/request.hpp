@@ -28,8 +28,9 @@ struct CompilationInput {
     std::filesystem::path source_path;
     // Mark sources that began with a "#!" escript header (implicit main/1 export, escript exit codes).
     bool escript = false;
-    // The frontend appended OTP's behaviour_info/1, generated from the module's -callback declarations.
-    bool behaviour_info_ = false;
+    // The number of trailing forms the frontend appended: OTP's predefined functions (module_info/0,1 and, for a
+    // module declaring -callback, behaviour_info/1).
+    std::size_t predefined_ = 0;
     // Retain immutable syntax and its source provenance beyond the parsing session.
     ast::Module syntax;
 };

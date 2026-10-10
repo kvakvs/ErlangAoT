@@ -69,6 +69,11 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | Behaviour module with a hand-written `behaviour_info/1` | Calls it while compiling users and warns about missing, ill-defined or deprecated callbacks | Not evaluated: its users' callbacks are not checked | [semantic](semantic.md#behaviours) |
 | Behaviour modules outside the batch (`gen_server`, `supervisor`, ...) | Loaded from the code path; their callbacks are checked | `behaviour M undefined` warning | [semantic](semantic.md#behaviours) |
 | `-behaviour` with a value that is not an atom | Warning prints the term with `~w` (`behaviour [115,116,114] undefined`) | Prints the attribute's source text (`behaviour "str" undefined`); the error is the same | [semantic](semantic.md#behaviours) |
+| `module_info(md5)` and the `vsn` OTP derives from it | MD5 of the compiled BEAM code | MD5 of the module's printed source; the derived `vsn` integer differs accordingly | [semantic](semantic.md#predefined-functions) |
+| `module_info(compile)` | `version` of OTP's compiler application, `options` given to it | Clause's version; `options` always `[]` | [semantic](semantic.md#predefined-functions) |
+| `module_info(functions)` | Also lists the functions OTP generates for funs (`'-f/0-fun-0-'/0`) | Source functions and the predefined ones only | [semantic](semantic.md#predefined-functions) |
+| `-nominal` in `module_info(attributes)` | Kept as `{nominal,[{Name,AbstractType,Params}]}` with abstract format | Left out | [semantic](semantic.md#predefined-functions) |
+| `erlang:get_module_info/1,2` | The BIF behind `module_info/0,1` | Not provided; `module_info/0,1` return literal data | [semantic](semantic.md#predefined-functions) |
 
 ## Language edge cases
 

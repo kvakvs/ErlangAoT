@@ -72,6 +72,10 @@ void prepare_source_locations(llvm::Module &output, const semantic::Module &modu
                             llvm::DICompileUnit::FullDebug);
     output.addModuleFlag(llvm::Module::Warning, "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
     for (const auto &function : module.functions) {
+        // OTP's predefined functions have no source line; without a scope they get no locations or comments.
+        if (semantic::predefined_form(module, function.form)) {
+            continue;
+        }
         const auto &source = module.syntax->form(function.form).source;
         function_scope(debug, output, module, {function.key.name, function.symbol, source}, optimized, sources);
     }

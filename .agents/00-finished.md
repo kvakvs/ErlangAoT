@@ -15,7 +15,7 @@ and [files.md](files.md). Full earlier wording is in Git history.
 | Test migration | Frontend/project/runtime migrations, 2026-09-28 | Ledger audit (plan 11 step 70). |
 | Compiler/runtime milestone | Steps 1–46, 2026-09-29 | Immediate-only subset and runtime skeleton. |
 | Pattern matching and guards | Steps 1–20 and 15a, 2026-10-01–03 | Function clauses and body matches over the admitted domain. |
-| Plan 11 | Steps 1–68 and 65A (phases A–L, M without 66/69/70), 2026-10-03–10 | Linked executables, `-behaviour` callback checks, ERTS-style heaps and collection, exceptions, recursion, comprehensions, records, funs, processes, multi-worker scheduling, ports, precise inference, specialization, tooling, Linux/x86/ARM validation and sanitizers. |
+| Plan 11 | Steps 1–68, 65A and 65B (phases A–L, M without 66/69/70), 2026-10-03–10 | Linked executables, `-behaviour` callback checks, `module_info/0,1` and informational attributes, ERTS-style heaps and collection, exceptions, recursion, comprehensions, records, funs, processes, multi-worker scheduling, ports, precise inference, specialization, tooling, Linux/x86/ARM validation and sanitizers. |
 
 **Still unfinished:** macOS Apple Silicon validation, upstream OTP Common Test
 evidence, the test-migration ledger audit, the optional scope decisions (D01–D07)
