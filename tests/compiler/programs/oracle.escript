@@ -8,18 +8,37 @@ main([VersionFile, SourceDir, Entry | Args]) ->
     ok = logger:remove_handler(default),
     ok = logger:add_handler(default, logger_std_h, #{config => #{type => standard_error}}),
     ok = file:write_file(VersionFile, io_lib:format("~s~n~s~n", [release(), otp_version()])),
-    [load(File) || File <- lists:sort(filelib:wildcard(filename:join(SourceDir, "**/*.erl")))],
+    load(lists:sort(filelib:wildcard(filename:join(SourceDir, "**/*.erl"))), [], false),
     run(list_to_atom(Entry), Args).
 
-%% Compiles one module in memory, failing on any warning.
-load(File) ->
+%% Compiles and loads the modules in memory, failing on any warning. A module whose
+%% behaviour module is not loaded yet waits until the other modules are.
+load([File | Files], Waiting, Loaded) ->
     case compile:file(File, [binary, return_errors, return_warnings, warnings_as_errors]) of
         {ok, Module, Binary, []} ->
-            {module, Module} = code:load_binary(Module, File, Binary);
+            {module, Module} = code:load_binary(Module, File, Binary),
+            load(Files, Waiting, true);
+        {error, [], [{_, Warnings}]} = Failure ->
+            case lists:all(fun undefined_behaviour/1, Warnings) of
+                true -> load(Files, [File | Waiting], Loaded);
+                false -> failed(Failure)
+            end;
         Failure ->
-            io:format(standard_error, "fixture compile failed: ~p~n", [Failure]),
-            halt(125)
-    end.
+            failed(Failure)
+    end;
+load([], [], _) ->
+    ok;
+load([], Waiting, true) ->
+    load(lists:reverse(Waiting), [], false);
+load([], Waiting, false) ->
+    failed({undefined_behaviours, lists:reverse(Waiting)}).
+
+undefined_behaviour({_, erl_lint, {undefined_behaviour, _}}) -> true;
+undefined_behaviour(_) -> false.
+
+failed(Failure) ->
+    io:format(standard_error, "fixture compile failed: ~p~n", [Failure]),
+    halt(125).
 
 %% Runs the entry in a fresh process so the escript process stays out of its links.
 run(Module, Args) ->

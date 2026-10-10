@@ -32,6 +32,8 @@ void print_source(std::ostream &output, const ast::Module &module, const SourceN
 // The source text of one expression or type of `module`, on one line where it allows.
 std::string expression_source(const ast::Module &module, const ast::ExprId &id);
 std::string type_source(const ast::Module &module, const ast::TypeId &id);
+// The source text of one literal term of `module`, such as an attribute value.
+std::string term_source(const ast::Module &module, const ast::TermId &id);
 // An atom name (UTF-8) as source text, quoted when it needs to be.
 std::string atom_source(std::string_view name);
 // The spelling of an operator.

@@ -447,6 +447,12 @@
 - Executable entry: `--entry`/manifest `entry` or the sole `main/1` exporter, resolved in
   `driver/entry` right after semantic indexing; contract in `docs/executables.md`. `#!` sources are escripts: `driver/escript` rewrites
   the header, `semantic/escript` exports `main/1`; entry detection prefers them.
+- Behaviours (step 65A, `docs/semantic.md#behaviours`): before `ParserSession::finish`, `driver/predefined` lexes
+  the text `semantic::behaviour_info_source` builds from `ParserSession::view()` and parses it as one more form
+  (`CompilationInput::behaviour_info_` → `Module::behaviour_info_`); `semantic::source_function` hides it from the
+  module's own exports, local calls, funs and specs; `semantic::check_behaviours` runs after indexing the batch and
+  reports erl_lint's behaviour warnings at the attribute name token (`report(TokenOrigin)`). `-behaviour(M)` counts
+  as a reference for library loading.
 - Startup: a resolved entry sets `CompilationRequest::startup`; `codegen/startup` appends a
   module (after the inputs, no syntax; artifact `clausev1_start`) whose `main` hands a
   `StartupDescriptor` to runtime `CLAUSE_main_v1`. The runtime ABI-checks all descriptors,

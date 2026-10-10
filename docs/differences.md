@@ -66,6 +66,9 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | Program arguments | `escript` passes every argument to `main/1`; emulator flags (`+t`) come from `%%!` or `ERL_FLAGS` | Leading runtime options (`--max-atoms`, `--max-heap`, `--max-stack`, `--max-memory`, `--args-file`, `--`) are taken out first; `CLAUSE_FLAGS` holds the same options | [executables](executables.md#runtime-options) |
 | Uncaught exception in an ordinary entry module | `escript` exits 127 | Exits 1 with one `uncaught exception <class>: <reason>` line (escript sources keep 127) | [executables](executables.md) |
 | Compiler diagnostics | `erl_lint` wording (`variable 'X' is unbound`) and warnings | Own wording (`unbound variable X`); OTP lint warnings are mostly not emitted (also unknown native record fields in access, update and patterns) | [semantic](semantic.md#bindings) |
+| Behaviour module with a hand-written `behaviour_info/1` | Calls it while compiling users and warns about missing, ill-defined or deprecated callbacks | Not evaluated: its users' callbacks are not checked | [semantic](semantic.md#behaviours) |
+| Behaviour modules outside the batch (`gen_server`, `supervisor`, ...) | Loaded from the code path; their callbacks are checked | `behaviour M undefined` warning | [semantic](semantic.md#behaviours) |
+| `-behaviour` with a value that is not an atom | Warning prints the term with `~w` (`behaviour [115,116,114] undefined`) | Prints the attribute's source text (`behaviour "str" undefined`); the error is the same | [semantic](semantic.md#behaviours) |
 
 ## Language edge cases
 

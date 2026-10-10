@@ -112,6 +112,13 @@ void ParserSession::consume(const PreprocessorEvent &event) {
 
 bool ParserSession::stopped() const { return !state_ || state_->stopped; }
 
+const ast::Module &ParserSession::view() const {
+    if (!state_) {
+        throw std::logic_error("finished parser session");
+    }
+    return state_->builder.view();
+}
+
 ParseResult ParserSession::finish(FeatureSnapshot features) && {
     if (!state_) {
         throw std::logic_error("finished parser session");

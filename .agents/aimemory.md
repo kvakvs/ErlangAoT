@@ -521,3 +521,12 @@ Host and tool gotchas:
   tests out of scope); TSan defines operator new (lifecycle_failure, heap_measurements don't link). TSan found
   Executor::clear destroying IoService under the executor lock (gate lock-order inversion): services die after it.
   One unexplained port_spawn os:cmd [] under ASan full load, never reproduced. Tidy runs on Windows only (user).
+- 65A (2026-10-10, -behaviour): OTP lint runs before erl_internal adds behaviour_info/1, so the module's own source
+  cannot export/call/fun/spec it (semantic::source_function hides it). erl_lint locates attribute diagnostics at the
+  attribute NAME token (column 2), report(TokenOrigin) + extent[1]; OTP sorts messages by location then tag and prints
+  errors before warnings (lint.py compares unordered). OTP behaviour check needs the behaviour module loaded: lint
+  oracle compiles files in golden order and loads each; programs oracle defers modules failing only on
+  undefined_behaviour. Python Path.write_text on Windows writes CRLF: use write_bytes(t.encode()). erlfmt helper with
+  unicode sources: build/plan11/fmt.escript now writes unicode:characters_to_binary. AGENTS.md (user, 2026-10-10): struct
+  fields also take trailing underscore; rename fields being worked on. Scripts build/plan11-step65a/*.cmd (-j 24,
+  ctest 16 slots).

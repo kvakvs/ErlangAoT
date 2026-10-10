@@ -37,6 +37,7 @@ processes and messaging.
 Accepted attributes: `module`, `export`, `file`, tuple and native `record`,
 `export_record`, `import_record`, type/spec
 forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,
+`behaviour`/`behavior` ([behaviours](semantic.md#behaviours)),
 `-compile` with `{no_auto_import, ...}` or warning-only `nowarn_*` options (for
 example `nowarn_deprecated_catch`) and `-import` of `erlang` guard BIFs. Other
 attributes (`on_load`, parse transforms, other

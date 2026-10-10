@@ -1,4 +1,5 @@
 #include "calls.hpp"
+#include "behaviours.hpp"
 #include "capabilities.hpp"
 #include "features.hpp"
 #include "funs.hpp"
@@ -36,6 +37,16 @@ Module *call_module(const FunctionRef caller, const ast::CallExpression &call, c
     return found->second;
 }
 
+// The function a call names: a remote call reaches any function, a local one only those its source may name.
+Function *named_function(Module &owner, const FunctionKey &key, const bool remote) {
+    if (!remote) {
+        const auto index = source_function(owner, key);
+        return index ? &owner.functions.at(*index) : nullptr;
+    }
+    const auto found = owner.lookup.find(key);
+    return found == owner.lookup.end() ? nullptr : &owner.functions.at(found->second);
+}
+
 // Match name/arity first, then enforce remote visibility even for self-qualified calls.
 std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpression &call, const Modules &modules,
                                   const ast::NodeSource &source, const Reporter &out) {
@@ -49,18 +60,17 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
     if (!owner) {
         return {};
     }
-    const auto found = owner->lookup.find(key);
-    if (found == owner->lookup.end()) {
+    auto *function = named_function(*owner, key, remote != nullptr);
+    if (!function) {
         report(*caller.module, &source,
                "undefined function " + utf8(owner->name) + ":" + utf8(key.name) + "/" + std::to_string(key.arity), out);
         return {};
     }
-    auto &function = owner->functions.at(found->second);
-    if (remote && !function.exported) {
+    if (remote && !function->exported) {
         report(*caller.module, &source, "remote function is not exported: " + utf8(key.name), out);
         return {};
     }
-    return FunctionRef{owner, &function};
+    return FunctionRef{owner, function};
 }
 
 // A direct call of a named function: not a service, record_info/2 or the call of a value.
@@ -307,6 +317,8 @@ std::set<std::u32string> referenced_modules(const ast::Module &syntax) {
             pending.insert(pending.end(), children.begin(), children.end());
         }
     }
+    const auto behaviours = declared_behaviours(syntax);
+    result.insert(behaviours.begin(), behaviours.end());
     return result;
 }
 

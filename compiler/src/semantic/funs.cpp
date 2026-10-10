@@ -33,8 +33,8 @@ const Function *fun_target(const Module &module, const ast::LocalFunReference &r
     if (!count) {
         return nullptr;
     }
-    const auto found = module.lookup.find({reference.name.name, *count});
-    return found == module.lookup.end() ? nullptr : &module.functions.at(found->second);
+    const auto found = source_function(module, {reference.name.name, *count});
+    return found ? &module.functions.at(*found) : nullptr;
 }
 
 std::optional<std::tuple<std::u32string, std::u32string, std::size_t>>

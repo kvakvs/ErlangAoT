@@ -1,4 +1,5 @@
 #include "declarations.hpp"
+#include "behaviours.hpp"
 #include "escript.hpp"
 #include "records.hpp"
 #include "symbols.hpp"
@@ -8,19 +9,25 @@
 namespace clause::semantic {
 void report(const Module &module, const ast::NodeSource *source, std::string message, const Reporter &reporter,
             const Severity severity) {
-    Diagnostic diagnostic{.code = DiagnosticCode::invalid_context,
-                          .message = std::move(message),
-                          .primary = {},
-                          .related = {},
-                          .severity = severity,
-                          .location = LogicalLocation{module.file, 1, 1}};
     if (source) {
-        const auto &origin = module.syntax->anchor(*source);
-        diagnostic.primary = origin.spelling;
-        diagnostic.related = origin.related;
-        diagnostic.location = origin.location;
+        report(module.syntax->anchor(*source), std::move(message), reporter, severity);
+        return;
     }
-    reporter(diagnostic);
+    reporter({.code = DiagnosticCode::invalid_context,
+              .message = std::move(message),
+              .primary = {},
+              .related = {},
+              .severity = severity,
+              .location = LogicalLocation{module.file, 1, 1}});
+}
+
+void report(const ast::TokenOrigin &origin, std::string message, const Reporter &reporter, const Severity severity) {
+    reporter({.code = DiagnosticCode::invalid_context,
+              .message = std::move(message),
+              .primary = origin.spelling,
+              .related = origin.related,
+              .severity = severity,
+              .location = origin.location});
 }
 
 std::optional<std::size_t> arity(const Integer &value) {
@@ -31,6 +38,14 @@ std::optional<std::size_t> arity(const Integer &value) {
         return {};
     }
     return result;
+}
+
+std::optional<std::size_t> source_function(const Module &module, const FunctionKey &key) {
+    const auto found = module.lookup.find(key);
+    if (found == module.lookup.end() || (module.behaviour_info_ && key == FunctionKey{U"behaviour_info", 1})) {
+        return std::nullopt;
+    }
+    return found->second;
 }
 
 namespace {
@@ -74,13 +89,13 @@ void export_function(Module &module, const ast::NameArity &value, const ast::Nod
         report(module, &source, "export arity must be in 0..255", out);
         return;
     }
-    const auto found = module.lookup.find({value.name.name, *count});
-    if (found == module.lookup.end()) {
+    const auto found = source_function(module, {value.name.name, *count});
+    if (!found) {
         report(module, &source, "export of undefined function " + utf8(value.name.name) + "/" + std::to_string(*count),
                out);
         return;
     }
-    auto &entry = module.functions[found->second];
+    auto &entry = module.functions[*found];
     if (entry.exported) {
         report(module, &source, "duplicate export " + utf8(value.name.name) + "/" + std::to_string(*count), out);
     }
@@ -127,15 +142,18 @@ void index_exports(Module &module, const Reporter &out) {
 }
 } // namespace
 
-std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &out, const bool escript) {
+std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &out,
+                              const IndexOptions options) {
     auto module = std::make_unique<Module>();
     module->syntax = &syntax;
     module->file = std::move(file);
+    module->behaviour_info_ = options.behaviour_info_;
     index_name(*module, out);
     index_functions(*module, out);
     index_exports(*module, out);
     index_records(*module, out);
-    if (escript) {
+    index_callbacks(*module, out);
+    if (options.escript_) {
         index_escript(*module, out);
     }
     return module;

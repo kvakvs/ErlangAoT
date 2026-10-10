@@ -327,6 +327,8 @@ add_subdirectory(compiler/printing)
 
 add_subdirectory(compiler/inference)
 
+add_subdirectory(compiler/lint)
+
 # Symbol round trips have no observable emitted-object replacement until lowering exists.
 add_executable(semantic_symbols compiler/semantic/symbols.cpp)
 clause_project_options(semantic_symbols)

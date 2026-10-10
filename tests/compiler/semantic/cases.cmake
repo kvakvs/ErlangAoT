@@ -371,6 +371,26 @@ semantic_case(callback_optional "-module(a). -callback run(A) -> A. -optional_ca
 semantic_case(callback_missing "-module(a). -optional_callbacks([run/1])." 1 "optional callback is undefined")
 semantic_case(callback_duplicate "-module(a). -callback run(A) -> A. -callback run(B) -> B." 1 "duplicate specification")
 semantic_case(callback_optional_duplicate "-module(a). -callback run(A) -> A. -optional_callbacks([run/1,run/1])." 1 "duplicate optional callback")
+# The behaviour_info/1 generated from -callback is invisible to the module's own source, as in OTP's erl_lint; the
+# remote call of it and its diagnostics against OTP live in tests/fixtures/lint and executables_behaviours.
+semantic_case(behaviour_info_export "-module(a). -export([behaviour_info/1]). -callback run() -> ok." 1
+    "behaviour_info_export.erl:1:13: export of undefined function behaviour_info/1")
+semantic_case(behaviour_info_local "-module(a). -export([f/0]). -callback run() -> ok. f() -> behaviour_info(callbacks)."
+    1 "undefined function a:behaviour_info/1")
+semantic_case(behaviour_info_fun "-module(a). -export([f/0]). -callback run() -> ok. f() -> fun behaviour_info/1." 1
+    "function behaviour_info/1 undefined")
+semantic_case(behaviour_info_spec "-module(a). -callback run() -> ok. -spec behaviour_info(atom()) -> term()." 1
+    "specification for undefined function behaviour_info")
+semantic_case(behaviour_info_remote
+    "-module(a). -export([f/0]). -callback run() -> ok. f() -> a:behaviour_info(callbacks)." 0 "^$")
+# A hand-written behaviour_info/1 is not evaluated, so its callbacks are not checked (docs/differences.md).
+file(WRITE "${semantic_work}/legacy.erl" "-module(legacy). -export([behaviour_info/1]). behaviour_info(callbacks) -> [{run, 0}].")
+file(WRITE "${semantic_work}/legacy_user.erl" "-module(legacy_user). -behaviour(legacy).")
+execute_process(COMMAND "${TOOL}" legacy.erl legacy_user.erl WORKING_DIRECTORY "${semantic_work}"
+    RESULT_VARIABLE result ERROR_VARIABLE err TIMEOUT ${semantic_timeout})
+if(NOT result STREQUAL "0" OR NOT err STREQUAL "")
+    message(FATAL_ERROR "Hand-written behaviour_info/1: ${result}: ${err}")
+endif()
 semantic_case(record_type "-module(a). -record(r,{x :: integer()}). -type t() :: #r{x :: 1..10}." 0 "^$")
 semantic_case(record_missing "-module(a). -type t() :: #missing{}." 1 "undefined record type")
 semantic_case(record_field "-module(a). -record(r,{x}). -type t() :: #r{y :: integer()}." 1 "undefined record type field")

@@ -22,6 +22,46 @@ macro/include origins, and later inputs are still diagnosed.
   order; a component is recursive when it has several members or a member
   calls itself.
 
+## Behaviours
+
+Plan 11 step 65A, following OTP's
+[behaviours](https://www.erlang.org/doc/system/design_principles.html#behaviours),
+`erl_internal:add_predefined_functions` and `erl_lint`'s `check_behaviour`.
+
+- A module declaring `-callback` gets OTP's predefined, exported
+  `behaviour_info/1`: `callbacks` gives the declared callbacks in source order,
+  `optional_callbacks` those of the well-formed `-optional_callbacks` lists
+  (callbacks qualified with a module are left out). The frontend appends it
+  as a function at the `-module` line (`driver/predefined`). As in OTP the
+  module's own source cannot name it: an `-export`, local call, `fun
+  behaviour_info/1` or `-spec` of it is an undefined function; remote calls
+  (also self-qualified) reach it. `-callback` beside a hand-written
+  `behaviour_info/1` is an error
+  (`cannot define callback attibute for F/A when behaviour_info is defined`,
+  OTP's spelling).
+- `-behaviour(M)` and `-behavior(M)` may repeat. `M` resolves in the batch; a
+  name with a library module (`library.md`) adds that module like a literal
+  call does. Diagnostics use OTP's text at the attribute name:
+  - `undefined callback function F/A (behaviour 'M')` for each required,
+    non-optional callback the module does not export (sorted);
+  - `conflicting behaviours -- callback F/A required by both 'M2' and 'M1'
+    (line L, column C)` when an earlier behaviour also requires it (an
+    optional callback counts when exported);
+  - `behaviour M undefined` when `M` is not in the batch or has no
+    `behaviour_info/1` (OTP behaviours such as `gen_server` are not part of
+    Clause yet), plus OTP's module-name errors for names that cannot be
+    modules (`the module name must not be empty`, `... must be an atom`, ...).
+- Warnings do not fail compilation. `-compile` options `nowarn_behaviours`
+  (the whole check, module-name errors included), `nowarn_undefined_behaviour_func`,
+  `nowarn_undefined_behaviour` and `nowarn_conflicting_behaviours` turn them
+  off.
+- Not evaluated: a hand-written exported `behaviour_info/1` of a behaviour
+  module, so its users' callbacks are not checked, and OTP's ill-defined
+  and deprecated-callback warnings never occur
+  ([differences](differences.md#errors-stack-traces-and-reports)).
+- Evidence: `tests/fixtures/lint` (OTP-generated diagnostics, CTest
+  `lint_diagnostics`), `executables_behaviours`, `semantic` CLI cases.
+
 ## Bindings
 
 Each binding has a function-relative identity `clause[N].local[M]`. Occurrences

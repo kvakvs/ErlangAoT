@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "files": [
+    "shape.erl",
+    "quiet_missing.erl",
+    "quiet_undefined.erl",
+    "quiet_conflicts.erl",
+    "quiet_all.erl"
+  ],
+  "exit_status": 1,
+  "diagnostics": [
+    {
+      "file": "quiet_conflicts.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function area/1 (behaviour 'shape')"
+    },
+    {
+      "file": "quiet_conflicts.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function area/1 (behaviour 'shape')"
+    },
+    {
+      "file": "quiet_missing.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "behaviour no_such_behaviour undefined"
+    },
+    {
+      "file": "quiet_undefined.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function area/1 (behaviour 'shape')"
+    },
+    {
+      "file": "quiet_undefined.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function name/0 (behaviour 'shape')"
+    },
+    {
+      "file": "quiet_undefined.erl",
+      "line": 5,
+      "column": 2,
+      "severity": "error",
+      "message": "the module name must not be empty"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "shape.erl": "ef177a0e7bfd4f46ebd83873f372de21c1238a3e50a377868bf16a5629c95989",
+    "quiet_missing.erl": "030e89ec4c39ef37c6e9b7208698153d4c17dcb5d1a21c03aee74a62852d68af",
+    "quiet_undefined.erl": "66c566ba1e1ecb013c09a0f14b58b738ff745d0eed0c8d562790f0b41118356a",
+    "quiet_conflicts.erl": "613a9f81e43cff645095868c838ed19179133727eb27516ebe554edb707910c4",
+    "quiet_all.erl": "03ac4761e2da09369803cb990d3f23fb6abd2a44e82228184a46b1c7538bb89e"
+  }
+}

@@ -1,0 +1,4 @@
+-module(quiet_missing).
+-compile(nowarn_undefined_behaviour_func).
+-behaviour(shape).
+-behaviour(no_such_behaviour).

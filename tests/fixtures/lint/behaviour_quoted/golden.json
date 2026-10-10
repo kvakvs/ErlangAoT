@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "files": [
+    "Quoted.erl",
+    "quoted_user.erl"
+  ],
+  "exit_status": 0,
+  "diagnostics": [
+    {
+      "file": "quoted_user.erl",
+      "line": 2,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function 'Init'/1 (behaviour ''Quoted'')"
+    },
+    {
+      "file": "quoted_user.erl",
+      "line": 2,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function 'with space'/0 (behaviour ''Quoted'')"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "Quoted.erl": "3439c1e082254af244704fd4c238b9731affe0b1020fdfabef92bcb5311b4b7b",
+    "quoted_user.erl": "c0dbdc1b830f387263c46a31b6da0c00d17b4738905d366dcf875a0cb807df72"
+  }
+}

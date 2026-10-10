@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "entry": "behaviours",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[{name,0},{area,1},{scale,2}]\n[{scale,2}]\ntrue\n[{circle,12,48},{square,9,none}]\n[circle,square]\n{error,function_clause}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "behaviours.erl": "7f9c31c07e58a41eea3cfb7d0798b429ef8d4060dbfcbbadaac3a8d910721756",
+    "circle.erl": "c62963bbf3a6840aab237eaf0aa1084032a5885113d7ab7ecf297ced25ca07c7",
+    "shape.erl": "30f44a16f32c4c1e93fc8e3f590b9573e3b1a942f2c7600aa2c1341684d94547",
+    "square.erl": "3ed7394bb5e152127b60f1e0f2a63cb43072dcb91b7fe8dfe22909474a4e4ba8"
+  }
+}

@@ -7,6 +7,7 @@
 #include "backend.hpp"
 #include "escript.hpp"
 #include "options.hpp"
+#include "predefined.hpp"
 #include <algorithm>
 #include <clause/compiler/parser.hpp>
 #include <clause/compiler/printing.hpp>
@@ -83,6 +84,7 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
         }
         parser.consume(*event);
     }
+    const bool behaviour_info = request.compile && !parser.stopped() && add_behaviour_info(parser, session.features());
     auto result = std::move(parser).finish(session.features());
     for (const auto &diagnostic : result.diagnostics) {
         print_diagnostic(diagnostic, sink);
@@ -94,6 +96,7 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
     if (request.compile) {
         codegen::validate_input_limits(inputs, {}, &result.module);
         inputs.emplace_back(path, std::move(result.module));
+        inputs.back().behaviour_info_ = behaviour_info;
     }
     return false;
 }

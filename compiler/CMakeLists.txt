@@ -30,7 +30,7 @@ target_include_directories(clause_frontend PUBLIC include PRIVATE src)
 target_link_libraries(clause_frontend PRIVATE clause_parser_dependency)
 
 add_executable(clau src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
-    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp)
+    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/predefined.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp)
 if(WIN32 AND MSVC)
     # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
     target_sources(clau PRIVATE clau.manifest)
@@ -64,7 +64,7 @@ target_link_libraries(clau PRIVATE clause_codegen)
 
 # Semantic analysis owns language identities without depending on LLVM representations.
 add_library(clause_semantic STATIC
-    src/semantic/declarations.cpp src/semantic/escript.cpp src/semantic/records.cpp src/semantic/native_records.cpp src/semantic/funs.cpp src/semantic/symbols.cpp
+    src/semantic/declarations.cpp src/semantic/behaviours.cpp src/semantic/escript.cpp src/semantic/records.cpp src/semantic/native_records.cpp src/semantic/funs.cpp src/semantic/symbols.cpp
     src/semantic/bindings.cpp src/semantic/calls.cpp src/semantic/match_plan.cpp src/semantic/match_plan_containers.cpp src/semantic/match_plan_records.cpp src/semantic/match_plan_bits.cpp src/semantic/binary_options.cpp src/semantic/match_plan_maps.cpp src/semantic/pattern_reads.cpp
     src/semantic/binding_patterns.cpp src/semantic/binding_expressions.cpp
     src/semantic/pattern_analysis.cpp src/semantic/pattern_constants.cpp

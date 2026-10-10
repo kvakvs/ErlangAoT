@@ -152,15 +152,29 @@ struct Module {
     std::map<std::u32string, const Module *> peers = {};
     // Escript sources implicitly export main/1, accept -mode and use escript exit semantics.
     bool escript = false;
+    // behaviour_info/1 was generated from the -callback declarations (OTP's predefined function) and is exported.
+    bool behaviour_info_ = false;
+};
+
+struct IndexOptions {
+    // The source began with an escript header.
+    bool escript_ = false;
+    // The frontend appended the behaviour_info/1 generated from the module's -callback declarations.
+    bool behaviour_info_ = false;
 };
 
 using Reporter = std::function<void(const Diagnostic &)>;
 // Attach logical and physical/macro/include provenance to semantic diagnostics.
 void report(const Module &module, const ast::NodeSource *source, std::string message, const Reporter &reporter,
             Severity severity = Severity::error);
+// Report at one token, such as an attribute's name, where erl_lint locates attribute diagnostics.
+void report(const ast::TokenOrigin &origin, std::string message, const Reporter &reporter,
+            Severity severity = Severity::error);
 // Index declarations and validate the whole module before any lowering occurs.
 std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &reporter,
-                              bool escript = false);
+                              IndexOptions options = {});
+// The index of a function the module's own source may name; OTP's predefined behaviour_info/1 is not one.
+std::optional<std::size_t> source_function(const Module &module, const FunctionKey &key);
 // Parse an Erlang declaration arity without narrowing arbitrary precision integers.
 std::optional<std::size_t> arity(const Integer &value);
 } // namespace clause::semantic

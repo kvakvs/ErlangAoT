@@ -40,6 +40,8 @@ class ParserSession {
     void consume(const PreprocessorEvent &event);
     // A resource limit stops further input work; ordinary syntax errors permit recovery.
     bool stopped() const;
+    // Inspect the forms committed so far, such as to derive OTP's predefined functions before finishing.
+    const ast::Module &view() const;
     // Finish once, retaining final feature state separately from per-form snapshots.
     ParseResult finish(FeatureSnapshot features = {}) &&;
 

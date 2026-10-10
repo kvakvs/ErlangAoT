@@ -132,7 +132,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–L are closed; phase M continues with steps 65A, 66, 69
+behavior. Phases A–L are closed; phase M continues with steps 66, 69
 and 70 below.
 
 | Step | Title | Commit |
@@ -308,28 +308,37 @@ as described in
 and pinned `erl_lint` (`check_behaviour`).
 
 - Success criteria
-  - [ ] `-behaviour(M)` and `-behavior(M)` are accepted, repeatable and kept as
-    module attributes (visible through `module_info(attributes)`).
-  - [ ] Callbacks of `M` come from its `-callback` and `-optional_callbacks`
-    declarations, resolved from project modules and the shipped library; a
+  - [x] `-behaviour(M)` and `-behavior(M)` are accepted and repeatable.
+    `module_info/0,1` does not exist in Clause yet, so the attributes are not
+    visible at run time (decided 2026-10-10).
+  - [x] Callbacks of `M` come from its `-callback` and `-optional_callbacks`
+    declarations, resolved from batch modules and the shipped library; a
     module declaring `-callback` exports a generated `behaviour_info/1`
-    (`callbacks`, `optional_callbacks`), as OTP's `erl_internal` adds it.
-  - [ ] Each required callback missing from the exports reports OTP's
+    (`callbacks`, `optional_callbacks`), as OTP's `erl_internal` adds it, and
+    like OTP its own source cannot export, call, `fun` or `-spec` it.
+  - [x] Each required callback missing from the exports reports OTP's
     `undefined callback function F/A (behaviour 'M')` warning; optional
-    callbacks are exempt. Also report `behaviour M undefined`,
-    `conflicting behaviours`, ill-defined callback and deprecated-callback
-    warnings with OTP's wording, honoring `nowarn_*`/`warnings_as_errors`.
-  - [ ] An unresolvable OTP behaviour (`gen_server`, `supervisor`,
+    callbacks are exempt. Also `behaviour M undefined`,
+    `conflicting behaviours`, OTP's module-name errors and the error for
+    `-callback` beside a hand-written `behaviour_info/1`, in OTP's wording and
+    location, honoring `-compile` `nowarn_*` options. A hand-written
+    `behaviour_info/1` is not evaluated, so ill-defined and deprecated
+    callback warnings cannot occur; `warnings_as_errors` stays a rejected
+    compile option (step 73).
+  - [x] An unresolvable OTP behaviour (`gen_server`, `supervisor`,
     `application`, ...) follows OTP's `undefined_behaviour` warning path, not
-    an error; any divergence is recorded in `docs/differences.md`.
-  - [ ] Contract recorded in `docs/semantic.md`; step 73 lists `behaviour`
+    an error; divergences are recorded in `docs/differences.md`.
+  - [x] Contract recorded in `docs/semantic.md`; step 73 lists `behaviour`
     as decided.
 - Tests
-  - [ ] CLI fixtures: a project behaviour module with required and optional
+  - [x] CLI fixtures: a project behaviour module with required and optional
     callbacks, a conforming implementer, missing/conflicting/undefined cases;
     diagnostics compared with OTP-derived goldens.
-  - [ ] Executable golden calling the implementer through
+  - [x] Executable golden calling the implementer through
     `M:behaviour_info(callbacks)` and a dynamic callback call.
+- Evidence (2026-10-10): `lint_diagnostics` (8 cases, OTP 29.1.1 goldens),
+  `executables_behaviours`, semantic CLI cases; fresh fast CTest 234/234,
+  check-quality clean ([validation](../docs/validation.md#history)).
 
 <a id="step-66"></a>
 

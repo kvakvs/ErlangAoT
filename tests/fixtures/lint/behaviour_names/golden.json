@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "files": [
+    "names.erl"
+  ],
+  "exit_status": 1,
+  "diagnostics": [
+    {
+      "file": "names.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "error",
+      "message": "the module name must not be empty"
+    },
+    {
+      "file": "names.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "behaviour '' undefined"
+    },
+    {
+      "file": "names.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "error",
+      "message": "the module name must contain at least one visible character"
+    },
+    {
+      "file": "names.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "behaviour ' ' undefined"
+    },
+    {
+      "file": "names.erl",
+      "line": 5,
+      "column": 2,
+      "severity": "error",
+      "message": "the module name must not contain control characters"
+    },
+    {
+      "file": "names.erl",
+      "line": 5,
+      "column": 2,
+      "severity": "warning",
+      "message": "behaviour 'a\\tb' undefined"
+    },
+    {
+      "file": "names.erl",
+      "line": 6,
+      "column": 2,
+      "severity": "error",
+      "message": "module names with non-latin1 characters are not supported"
+    },
+    {
+      "file": "names.erl",
+      "line": 6,
+      "column": 2,
+      "severity": "warning",
+      "message": "behaviour 'λ' undefined"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "names.erl": "526d697c99fa5c8498f5a5a29c5d96b6cbacabc79efc7e5296791d41598946d7"
+  }
+}

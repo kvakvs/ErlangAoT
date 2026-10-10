@@ -126,7 +126,7 @@ void contract(Registry &registry, const Module &module, const ast::FormId &id, c
     if (spec.module && spec.module->name != module.name) {
         report(module, &source, "specification module differs from current module", out);
     }
-    if (!spec.callback && !module.lookup.contains({spec.name.name, spec.arity})) {
+    if (!spec.callback && !source_function(module, {spec.name.name, spec.arity})) {
         report(module, &source, "specification for undefined function " + key.name, out);
     }
     const auto duplicate = std::ranges::any_of(

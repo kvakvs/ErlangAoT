@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "files": [
+    "server.erl",
+    "worker.erl",
+    "both.erl",
+    "exported.erl",
+    "twice.erl"
+  ],
+  "exit_status": 0,
+  "diagnostics": [
+    {
+      "file": "both.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "conflicting behaviours -- callback init/1 required by both 'worker' and 'server' (line 3, column 2)"
+    },
+    {
+      "file": "both.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function info/0 (behaviour 'worker')"
+    },
+    {
+      "file": "exported.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "conflicting behaviours -- callback info/0 required by both 'worker' and 'server' (line 3, column 2)"
+    },
+    {
+      "file": "exported.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "conflicting behaviours -- callback init/1 required by both 'worker' and 'server' (line 3, column 2)"
+    },
+    {
+      "file": "twice.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "conflicting behaviours -- callback info/0 required by both 'worker' and 'worker' (line 3, column 2)"
+    },
+    {
+      "file": "twice.erl",
+      "line": 4,
+      "column": 2,
+      "severity": "warning",
+      "message": "conflicting behaviours -- callback init/1 required by both 'worker' and 'worker' (line 3, column 2)"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "server.erl": "cbbe63c828aeb7a2c80aa4bde9060f7e61005fd306f710b4ff9f50c1893e9769",
+    "worker.erl": "935e86848623a599b4bbe99a6ed14535d300cc5a30fdb3fc0687dd37f5c3cba0",
+    "both.erl": "8d143959f619872e593be036e078725c573c1e163015abea05e6b8cdec614d3a",
+    "exported.erl": "6a71347e4d98802c81d2c00f1ce6aee8f06d3b68cc93dd6e2833252e9340e839",
+    "twice.erl": "4700dd6690f371bfa50f4436c36fb773af54ee1416d95df03be22cdaa2949fb1"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "files": [
+    "handwritten.erl"
+  ],
+  "exit_status": 1,
+  "diagnostics": [
+    {
+      "file": "handwritten.erl",
+      "line": 5,
+      "column": 2,
+      "severity": "error",
+      "message": "cannot define callback attibute for run/0 when behaviour_info is defined"
+    },
+    {
+      "file": "handwritten.erl",
+      "line": 6,
+      "column": 2,
+      "severity": "error",
+      "message": "cannot define callback attibute for stop/1 when behaviour_info is defined"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "handwritten.erl": "b0a19e48faf59395003e3bbcddab627a92032a14449dc0c2552c818ad87e16c3"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "files": [
+    "shape.erl",
+    "circle.erl"
+  ],
+  "exit_status": 0,
+  "diagnostics": [],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "shape.erl": "ef177a0e7bfd4f46ebd83873f372de21c1238a3e50a377868bf16a5629c95989",
+    "circle.erl": "c9f9ba42706f0cffe77ea7fa2c643b7fe9b06bced30d69d20de650f2ae8aa42f"
+  }
+}

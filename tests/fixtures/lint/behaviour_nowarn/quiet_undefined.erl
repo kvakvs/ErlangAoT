@@ -1,0 +1,5 @@
+-module(quiet_undefined).
+-compile([nowarn_undefined_behaviour]).
+-behaviour(shape).
+-behaviour(no_such_behaviour).
+-behaviour('').

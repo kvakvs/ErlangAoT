@@ -137,4 +137,9 @@ std::string type_source(const ast::Module &module, const ast::TypeId &id) {
     const SourceNotes notes;
     return printing::SourcePrinter(module, notes).type(id);
 }
+
+std::string term_source(const ast::Module &module, const ast::TermId &id) {
+    const SourceNotes notes;
+    return printing::SourcePrinter(module, notes).term(id);
+}
 } // namespace clause

@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "files": [
+    "shape.erl",
+    "partial.erl",
+    "american.erl"
+  ],
+  "exit_status": 0,
+  "diagnostics": [
+    {
+      "file": "american.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function area/1 (behaviour 'shape')"
+    },
+    {
+      "file": "american.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function name/0 (behaviour 'shape')"
+    },
+    {
+      "file": "partial.erl",
+      "line": 3,
+      "column": 2,
+      "severity": "warning",
+      "message": "undefined callback function name/0 (behaviour 'shape')"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "shape.erl": "ef177a0e7bfd4f46ebd83873f372de21c1238a3e50a377868bf16a5629c95989",
+    "partial.erl": "1e38c13c07ea62304e5330954ad130762cc30cbc401823e001ed86852a549c7f",
+    "american.erl": "6e0fabfc32ff22d7a1cc23ffa2302dd5fa202c5e066f8677108c198d598e872d"
+  }
+}

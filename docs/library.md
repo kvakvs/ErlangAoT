@@ -29,8 +29,8 @@ sort. Stack traces name the library functions, not OTP's.
 ## How programs get them
 
 - When a batch (positional inputs or one project target) names a module with
-  a literal atom — `M:F(...)` with literal `M`, `fun M:F/A`, or
-  `apply(M, F, Args)` with literal `M` — that no input defines, and
+  a literal atom — `M:F(...)` with literal `M`, `fun M:F/A`,
+  `apply(M, F, Args)` with literal `M`, or `-behaviour(M)` — that no input defines, and
   `<library>/M.erl` exists, the compiler parses and compiles that file into
   the batch, then repeats for the modules the added files name. A call
   `M:F(...)` of a catalog builtin (`io:format/2`, `os:type/0`) names no

@@ -2,6 +2,7 @@
 #include "../codegen/limits.hpp"
 #include "../codegen/progress.hpp"
 #include "../project/paths.hpp"
+#include "../semantic/behaviours.hpp"
 #include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
 #include "../semantic/services.hpp"
@@ -13,12 +14,14 @@ void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis
     analysis.modules.reserve(request.inputs.size());
     for (const auto &input : request.inputs) {
         codegen::progress(request, "analysis", input.source_path);
-        auto module = semantic::index(input.syntax, project::path_text(input.source_path), report, input.escript);
+        auto module = semantic::index(input.syntax, project::path_text(input.source_path), report,
+                                      {.escript_ = input.escript, .behaviour_info_ = input.behaviour_info_});
         semantic::bind_parameters(*module, report);
         semantic::resolve_services(*module, report);
         semantic::check_capabilities(*module, report);
         analysis.modules.push_back(std::move(module));
     }
+    semantic::check_behaviours(analysis.modules, report);
 }
 
 // Attach known module identities to each batch analysis phase before invoking its shared implementation.
