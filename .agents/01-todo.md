@@ -118,7 +118,8 @@ checked as implemented.
 - **D02 — Atom collection** ([72](11-plan.md#step-72)): bounded permanent
   storage versus collection.
 - **D03 — Behavior-changing attributes and transforms**
-  ([73](11-plan.md#step-73)): compile options, parse transforms, on-load.
+  ([73](11-plan.md#step-73)): compile options, parse transforms, on-load;
+  `-behaviour` selected as [65A](11-plan.md#step-65a).
 - **D04 — Public stage interchange** ([74](11-plan.md#step-74)): only for a
   concrete consumer.
 - **D05 — Intermediate-stage readers** ([75](11-plan.md#step-75)): directories

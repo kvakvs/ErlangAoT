@@ -122,7 +122,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [58A](#step-58a)–[58N3](#step-58n3), [59](#step-59)–[62B](#step-62b) | F23, F25, F29–F34 |
-| M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
+| M. Validation closure | [63](#step-63)–[70](#step-70), [65A](#step-65a) | V01–V04, D03 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
 
@@ -132,8 +132,8 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–L are closed; phase M continues with steps 66, 69 and 70
-below.
+behavior. Phases A–L are closed; phase M continues with steps 65A, 66, 69
+and 70 below.
 
 | Step | Title | Commit |
 | --- | --- | --- |
@@ -294,6 +294,43 @@ below.
 
 ## M. Validation closure
 
+<a id="step-65a"></a>
+
+### 65A. Implement `-behaviour`/`-behavior` attributes
+
+Backlog: D03 (selected slice). Depends on: [58](#step-58). Added 2026-10-10
+(user direction); runs before every other remaining step.
+
+Accept both spellings instead of rejecting them as behavior-changing
+attributes, and check the module's exports against the declared callback API
+as described in
+[OTP design principles: behaviours](https://www.erlang.org/doc/system/design_principles.html#behaviours)
+and pinned `erl_lint` (`check_behaviour`).
+
+- Success criteria
+  - [ ] `-behaviour(M)` and `-behavior(M)` are accepted, repeatable and kept as
+    module attributes (visible through `module_info(attributes)`).
+  - [ ] Callbacks of `M` come from its `-callback` and `-optional_callbacks`
+    declarations, resolved from project modules and the shipped library; a
+    module declaring `-callback` exports a generated `behaviour_info/1`
+    (`callbacks`, `optional_callbacks`), as OTP's `erl_internal` adds it.
+  - [ ] Each required callback missing from the exports reports OTP's
+    `undefined callback function F/A (behaviour 'M')` warning; optional
+    callbacks are exempt. Also report `behaviour M undefined`,
+    `conflicting behaviours`, ill-defined callback and deprecated-callback
+    warnings with OTP's wording, honoring `nowarn_*`/`warnings_as_errors`.
+  - [ ] An unresolvable OTP behaviour (`gen_server`, `supervisor`,
+    `application`, ...) follows OTP's `undefined_behaviour` warning path, not
+    an error; any divergence is recorded in `docs/differences.md`.
+  - [ ] Contract recorded in `docs/semantic.md`; step 73 lists `behaviour`
+    as decided.
+- Tests
+  - [ ] CLI fixtures: a project behaviour module with required and optional
+    callbacks, a conforming implementer, missing/conflicting/undefined cases;
+    diagnostics compared with OTP-derived goldens.
+  - [ ] Executable golden calling the implementer through
+    `M:behaviour_info(callbacks)` and a dynamic callback call.
+
 <a id="step-66"></a>
 
 ### 66. Validate macOS Apple Silicon
@@ -367,7 +404,8 @@ Backlog: D03. Depends on: [58](#step-58). **Decision.**
 
 - Success criteria
   - [ ] Per-attribute decision (`compile` options, `parse_transform`,
-    `on_load`, others); rejected ones keep diagnostics.
+    `on_load`, others; `behaviour` is implemented by [65A](#step-65a));
+    rejected ones keep diagnostics.
 - Tests
   - [ ] CLI diagnostics for each rejected attribute.
 
