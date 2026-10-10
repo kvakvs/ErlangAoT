@@ -155,7 +155,7 @@ links every selected target that has an `output` or `entry` key, or that CLI
 
 | Setting | Manifest and CLI combination |
 | --- | --- |
-| `include_dirs` | Manifest order, after CLI `-I` (last CLI `-I` searched first) |
+| `include_dirs` | Manifest order, after CLI `-I` (last CLI `-I` searched first); an entry with wildcards (`deps/*/include`, `apps/**/include`) expands in place to the existing directories it matches, sorted by UTF-8 path bytes (`**` also matches none, directory symlinks are skipped); an unmatched pattern is an error |
 | `source_search_paths` | Project source lookup only |
 | `defines` | Manifest first, then CLI; duplicates across both are errors |
 | `applications` | Manifest map; CLI entries replace matching names |

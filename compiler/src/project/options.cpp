@@ -1,17 +1,24 @@
 #include "options.hpp"
 #include "diagnostics.hpp"
+#include "discovery.hpp"
 #include "paths.hpp"
 
 namespace clause::project {
 namespace {
-// Preserve last-CLI-first include order, followed by manifest declaration order.
-void includes(PreprocessorOptions &result, const TargetOptions &target, const std::filesystem::path &base,
-              const std::filesystem::path &invocation) {
+// The directories manifest paths and CLI paths are relative to.
+struct Roots {
+    const std::filesystem::path &manifest;
+    const std::filesystem::path &invocation;
+};
+
+// Preserve last-CLI-first include order, followed by manifest declaration order (patterns expanded in place).
+void includes(PreprocessorOptions &result, const TargetOptions &target, const Roots &roots) {
     for (auto &path : result.include_paths) {
-        path = absolute_path(invocation, path);
+        path = absolute_path(roots.invocation, path);
     }
-    for (const auto &path : target.include_dirs) {
-        result.include_paths.push_back(absolute_path(base, native_path(path.value)));
+    for (const auto &pattern : target.include_dirs) {
+        const auto directories = include_directories(roots.manifest, pattern);
+        result.include_paths.insert(result.include_paths.end(), directories.begin(), directories.end());
     }
 }
 
@@ -73,7 +80,7 @@ PreprocessorOptions compose_options(const Target &target, const std::filesystem:
                                     const std::filesystem::path &invocation, const PreprocessorOptions &cli) {
     auto result = cli;
     result.working_directory = base;
-    includes(result, target.options, base, invocation);
+    includes(result, target.options, {base, invocation});
     result.definitions = definitions(target.options, cli);
     result.features = features(target.options, cli);
     result.applications = applications(target.options, cli, base, invocation);

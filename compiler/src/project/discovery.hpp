@@ -13,6 +13,10 @@ struct DiscoveryLimits {
 // Expand one wildcard selection deterministically, rejecting an unmatched pattern.
 std::vector<std::filesystem::path> wildcard_sources(const std::filesystem::path &base, const Text &pattern,
                                                     DiscoveryLimits limits = {});
+// Expand one include_dirs entry: a literal directory as it is, a pattern to the existing directories it matches
+// (directory symlinks skipped), sorted; an unmatched pattern is an error.
+std::vector<std::filesystem::path> include_directories(const std::filesystem::path &base, const Text &pattern,
+                                                       DiscoveryLimits limits = {});
 // Recursively collect regular Erlang sources under one explicitly named directory.
 std::vector<std::filesystem::path> directory_sources(const std::filesystem::path &base, const Text &directory,
                                                      DiscoveryLimits limits = {});

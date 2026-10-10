@@ -11,7 +11,7 @@ name = "emqx"
 # List files or patterns, e.g. ["main.erl", "src/*.erl", "shared/**/*.erl"].
 # Patterns support *, ?, and ** as a whole directory component.
 sources = [
-  "references/emqx/apps/emqx/src/*.erl", "references/emqx/apps/emqx/src/*/*.erl"
+  "references/emqx/apps/emqx/**/*.erl"
 ]
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.
@@ -29,6 +29,7 @@ include_dirs = [
   "references/otp/lib/compiler/include", 
   "references/otp/lib/stdlib/include",
   "references/otp/lib",
+  "references/emqx/apps",
   "references/emqx/apps/*/include"
 ]
 # Predefined macros, e.g. ["DEBUG", "LIMIT=100", 'LABEL="demo"'].

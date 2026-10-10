@@ -45,6 +45,24 @@ file(WRITE "${options_dir}/main.erl" "-module(options). -include(\"hidden.hrl\")
 file(WRITE "${options_dir}/generated/hidden.hrl" "-define(HEADER,1).\n")
 check(source_roots_are_not_headers 1 "^$" "hidden.hrl" "${options_dir}/project.toml" --parse-check)
 
+# include_dirs patterns expand to the directories they match: `*` one component, `**` any number (none included).
+set(globbed "${WORK}/include_globs")
+file(WRITE "${globbed}/deps/a/include/a.hrl" "-define(A,1).\n")
+file(WRITE "${globbed}/deps/b/include/b.hrl" "-define(B,2).\n")
+file(WRITE "${globbed}/apps/x/y/include/c.hrl" "-define(C,3).\n")
+file(WRITE "${globbed}/apps/top.hrl" "-define(T,4).\n")
+file(WRITE "${globbed}/main.erl" [=[-module(globbed).
+-include("a.hrl").
+-include("b.hrl").
+-include("c.hrl").
+-include("top.hrl").
+value() -> {?A, ?B, ?C, ?T}.
+]=])
+file(WRITE "${globbed}/project.toml" "schema_version=1\n[[targets]]\nname='app'\nsources=['main.erl']\n[targets.options]\ninclude_dirs=['deps/*/include','apps/**']\n")
+check(include_dir_patterns 0 "value=1.*value=2.*value=3.*value=4" "^$" "${globbed}/project.toml" --print-ast)
+file(WRITE "${globbed}/unmatched.toml" "schema_version=1\n[[targets]]\nname='app'\nsources=['main.erl']\n[targets.options]\ninclude_dirs=['deps/*/missing']\n")
+check(include_dir_unmatched 1 "^$" "unmatched include directory pattern: deps/\\*/missing" "${globbed}/unmatched.toml" --parse-check)
+
 # Separate OS processes compete for the same exclusive manifest destination.
 execute_process(COMMAND "${TOOL}" --new-project "race λ"
     COMMAND "${TOOL}" --new-project "race λ"
