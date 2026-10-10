@@ -32,6 +32,7 @@ Options:
       --print-pp         Print preprocessed Erlang source to stdout.
       --print-ast        Parse and print an indented syntax tree to stdout.
       --print-source     Parse and print each module as Erlang source to stdout.
+      --print-inputs     Print the selected Erlang source files, one per line, and exit without processing them.
   -I, --include <dir>  Add an include directory (last supplied is searched first).
   -D, --define <name[=term]>  Predefine a macro (default value: true).
       --app-dir <app=dir>  Map an include_lib application to a directory.
@@ -40,6 +41,8 @@ Options:
       --               Treat all remaining arguments as input paths.
 
 Checks do not validate semantics or run parse transforms.
+--print-inputs lists sources after project globs and source_search_paths resolve, replacing other check/print
+actions; modules found later by name through source_search_paths or the library are not listed.
 With no check/print action, source batches compile to verified objects in memory.
 Only --emit writes module artifacts (default root: build/aot); --output links an executable.
 Compilation switches conflict with frontend check/print actions and --new-project.
@@ -76,6 +79,10 @@ int run_command(const std::span<char *> arguments) {
 
     if (!clause::cli::validate_inputs(options.inputs)) {
         return 1;
+    }
+    if (options.print_inputs) {
+        clause::cli::print_inputs(options.inputs);
+        return 0;
     }
 
     return clause::cli::process_inputs(options);

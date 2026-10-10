@@ -73,6 +73,15 @@ int publish_executables(const std::vector<PendingExecutable> &pending) {
     return 0;
 }
 
+// List one target's resolved sources, naming the target first when several are selected.
+bool print_target_inputs(const project::Invocation &invocation, const project::PlannedTarget &target) {
+    if (invocation.targets.size() > 1) {
+        std::cout << "[target " << target.name << "]\n";
+    }
+    print_inputs(target.sources);
+    return false;
+}
+
 // Defer all project publication until every selected target has compiled successfully.
 int publish_targets(const std::vector<Publication> &pending) {
     for (const auto &batch : pending) {
@@ -101,6 +110,9 @@ int run_project(const Options &options) {
     const project::TargetExecutor execute = [&](const project::Invocation &invocation,
                                                 const project::PlannedTarget &target,
                                                 const project::MessageSink &sink) {
+        if (options.print_inputs) {
+            return print_target_inputs(invocation, target);
+        }
         FrontendRequest request{options.print_pp,
                                 options.print_ast,
                                 options.parse_check,

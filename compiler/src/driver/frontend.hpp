@@ -48,4 +48,6 @@ struct FrontendRequest {
 // Process one isolated batch; project targets never share declaration tables.
 bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
                    const DiagnosticSink &diagnostics);
+// List selected inputs one per line on stdout without processing them (--print-inputs).
+void print_inputs(std::span<const std::filesystem::path> paths);
 } // namespace clause::cli

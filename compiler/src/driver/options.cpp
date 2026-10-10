@@ -96,12 +96,16 @@ struct Flag {
 
 // Keep generic mode/informational flags separate from operand-consuming options.
 bool parse_flag(const std::string_view argument, Options &options) {
-    static const std::map<std::string_view, Flag> flags{
-        {"-h", {&Options::show_help, false}},           {"--help", {&Options::show_help, false}},
-        {"--version", {&Options::show_version, false}}, {"--preprocess-check", {&Options::preprocess, true}},
-        {"--print-pp", {&Options::print_pp, true}},     {"--parse-check", {&Options::parse_check, true}},
-        {"--print-ast", {&Options::print_ast, true}},   {"--print-source", {&Options::print_source, true}},
-        {"--verbose", {&Options::verbose, false}}};
+    static const std::map<std::string_view, Flag> flags{{"-h", {&Options::show_help, false}},
+                                                        {"--help", {&Options::show_help, false}},
+                                                        {"--version", {&Options::show_version, false}},
+                                                        {"--preprocess-check", {&Options::preprocess, true}},
+                                                        {"--print-pp", {&Options::print_pp, true}},
+                                                        {"--parse-check", {&Options::parse_check, true}},
+                                                        {"--print-ast", {&Options::print_ast, true}},
+                                                        {"--print-source", {&Options::print_source, true}},
+                                                        {"--print-inputs", {&Options::print_inputs, true}},
+                                                        {"--verbose", {&Options::verbose, false}}};
     const auto found = flags.find(argument);
     if (found == flags.end()) {
         return false;
@@ -148,8 +152,7 @@ static std::optional<std::string> validate_options(const Options &options) {
     }
     if (options.preprocess && (options.output_explicit || options.entry)) {
         return "--output and --entry cannot be used with --preprocess-check, --parse-check, --print-pp, --print-ast, "
-               "or "
-               "--print-source";
+               "--print-source, or --print-inputs";
     }
     return std::nullopt;
 }

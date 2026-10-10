@@ -55,6 +55,10 @@ check(print_pp 0 "value.*1" "^$" --project project.toml --print-pp --target app)
 check(output_check_conflict 2 "^$" "cannot be used" --project project.toml --parse-check -o sentinel)
 check(output_multiple_conflict 2 "^$" "exactly one" --project project.toml -o sentinel)
 check(default_pipeline 0 "^$" "^$" --project project.toml)
+check(print_inputs_all 0 "^\\[target app\\]\n[^\n]*/shared\\.erl\n\\[target tests\\]\n[^\n]*/shared\\.erl\n$" "^$"
+    --project project.toml --print-inputs)
+check(print_inputs_target 0 "^[^\n]*/shared\\.erl\n$" "^$" --project project.toml --target tests --print-inputs)
+check(print_inputs_entry 2 "^$" "cannot be used with.*--print-inputs" --project project.toml --print-inputs --entry shared)
 check(default_output 1 "^$" "no entry point: no module exports main/1" --project project.toml --target app -o sentinel)
 check(verbose_project 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n\\[parse\\] [^\n]*shared.erl\n\\[comp\\].*phase=emission.*target=\"tests\""
     --verbose --project project --target tests)

@@ -70,6 +70,15 @@ clau --new-project <filename>
 - `-o/--output` links the target to that path instead of its `output`
   ([linking](executables.md#linking)); it requires exactly one selected target.
 - `--verbose` traces `[pp]` files/includes and `[parse]` sources on stderr.
+- `--print-inputs` prints each selected target's sources after
+  [discovery](#paths-and-discovery) (globs, `source_dirs`, literal sources found
+  through `source_search_paths`) as absolute paths, one per line, and exits
+  without processing them. With several targets, each list follows a
+  `[target <name>]` line. Modules that would join the batch later because a
+  source names them are not listed: finding them needs parsing. Positional
+  inputs are checked for readability and printed as given. It replaces other
+  check/print actions and conflicts like them with `-o`, `--entry` and
+  compilation switches.
 - Exit 2: usage errors and unknown targets. Exit 1: manifest, discovery,
   frontend or creation failures. Exit 0: success (warnings allowed).
 
@@ -77,7 +86,7 @@ Each selected target is a separate compilation batch with its own preprocessing
 sessions. Planning (decode, select, discover, check output collisions) finishes
 before any source runs; execution then processes targets/files in order and
 latches failures. Payload output goes to stdout in target/file order without
-banners; context and diagnostics go to stderr. A target with diagnostics is
+banners (except the `--print-inputs` target lines); context and diagnostics go to stderr. A target with diagnostics is
 named once, on a `<manifest> [target <name>]:` line before its first one; the
 diagnostics themselves (`error: file:line:col: message`) carry no tool or
 target prefix.

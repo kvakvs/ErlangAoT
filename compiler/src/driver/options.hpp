@@ -34,6 +34,8 @@ struct Options {
     bool print_ast = false;
     // Parse the expanded token stream and emit it as Erlang source (docs/compile.md#source-printing).
     bool print_source = false;
+    // List the selected input files and stop before reading them; takes precedence over other actions.
+    bool print_inputs = false;
     // Request syntax diagnostics without requiring tree output.
     bool parse_check = false;
     // Recreate preprocessing options independently for every input module.

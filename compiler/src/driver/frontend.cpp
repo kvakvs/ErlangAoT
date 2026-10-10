@@ -218,6 +218,12 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
     return failed;
 }
 
+void print_inputs(const std::span<const std::filesystem::path> paths) {
+    for (const auto &path : paths) {
+        std::cout << filename(path) << '\n';
+    }
+}
+
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
     FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check, !options.preprocess,

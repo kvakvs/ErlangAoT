@@ -132,6 +132,7 @@ in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
 | `--print-ir` / `--print-optimized-ir` | Verified IR before/after LLVM passes, with Erlang source lines as comments |
 | `--print-types` | Each module as Erlang source annotated with inferred types ([semantic](semantic.md#--print-types)); stops before LLVM |
 | `--verbose` | `[pp]`, `[parse]` and `[comp]` phase events on stderr |
+| `--print-inputs` | List the selected source files on stdout, one per line, and exit without preprocessing, parsing or compiling them ([projects](projects.md#cli-and-target-selection)) |
 
 - Without `--emit`, compilation verifies objects in memory and writes nothing.
 - Positional inputs form one batch; each project target is its own batch.
