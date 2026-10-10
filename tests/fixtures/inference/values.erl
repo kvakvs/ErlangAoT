@@ -139,7 +139,15 @@
     maybe_after/1,
     second/2,
     cons_unknown/2,
-    cons_list/1
+    cons_list/1,
+    kind/1,
+    apply_bound/0,
+    apply_reference/0,
+    apply_arguments/1,
+    apply_named/0,
+    apply_list/0,
+    apply_unknown_list/1,
+    apply_unknown_module/1
 ]).
 
 -record(point, {x = 0, y}).
@@ -564,7 +572,8 @@ called_from_tuple() -> (element(1, {fun() -> 1 end}))().
 %% expect: unknown_call(fun((_) -> _)) -> _
 unknown_call(F) -> F(1).
 
-%% expect: applied() -> _
+%% apply/2 with no arguments calls the fun's zero-arity clauses.
+%% expect: applied() -> 1
 applied() -> apply(fun() -> 1 end, []).
 
 %% A call with the wrong number of arguments raises badarity.
@@ -810,3 +819,38 @@ cons_unknown(H, T) -> [H | T].
 %% In front of a possibly empty list: a nonempty list.
 %% expect: cons_list(maybe_improper_list()) -> nonempty_maybe_improper_list()
 cons_list(T) when is_list(T) -> [1 | T].
+
+%% expect: kind(1) -> one; (_) -> other
+kind(1) -> one;
+kind(_) -> other.
+
+%% apply/2 calls a bound anonymous fun with the listed arguments like F(1).
+%% expect: apply_bound() -> 2
+apply_bound() ->
+    F = fun(X) -> X + 1 end,
+    apply(F, [1]).
+
+%% apply/2 selects the function types of the fun it calls.
+%% expect: apply_reference() -> one
+apply_reference() -> apply(fun kind/1, [1]).
+
+%% expect: apply_arguments(_) -> one | other
+apply_arguments(X) -> erlang:apply(fun kind/1, [X]).
+
+%% apply/3 of literal atoms calls the exported batch function.
+%% expect: apply_named() -> one
+apply_named() -> apply(values, kind, [1]).
+
+%% A list of known positions gives the arguments.
+%% expect: apply_list() -> one
+apply_list() ->
+    Args = [1],
+    apply(fun kind/1, Args).
+
+%% Arguments of an unknown list leave the result unknown.
+%% expect: apply_unknown_list(_) -> _
+apply_unknown_list(Args) -> apply(fun kind/1, Args).
+
+%% So does a module that is not known.
+%% expect: apply_unknown_module(_) -> _
+apply_unknown_module(Module) -> apply(Module, kind, [1]).

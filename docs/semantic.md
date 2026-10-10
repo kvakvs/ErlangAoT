@@ -179,10 +179,18 @@ Inference is separate from declared types and never trusts specs.
   evaluated again for that call with its patterns matching the arguments'
   facts, at most 4 such calls deep, and its first evaluation's facts are
   restored afterwards (`Double = fun(Y) -> Y * 2 end, Double(3)` is 6).
-  `apply/2,3` and dynamic calls stay `term()`. Since `fun F/A` may name a
-  function inferred later, the passes over the batch also repeat until every
-  such fun read its function's final result; otherwise a last pass gives
-  them `term()` results.
+  `apply(F, Args)` (also `erlang:apply/2`) is a call of `F` with the
+  arguments `Args` holds: the elements of a literal proper list, else those
+  of its fact (`[]`, a list of known positions, or as many copies of a
+  proper list's element as `F`'s single arity takes); a bound anonymous fun
+  is evaluated again as above (`apply(fun kind/1, [1])` selects `kind(1)`).
+  `apply(M, F, Args)` whose `M` and `F` are known atoms naming an exported
+  batch function reads that function's function types like `fun F/A`.
+  Arguments of unknown length, other targets and `M:F(Args)` with variable
+  names stay `term()`. Since `fun F/A` and `apply/3` may name a function
+  inferred later, the passes over the batch also repeat until every such
+  read saw its function's final result; otherwise a last pass gives them
+  `term()` results.
 - Whole-value body assignments and aliases copy the RHS fact
   (`Y = 42, Z = Y, id(Z)` infers 42); tuple, list, map and tuple-record
   patterns give their variables the facts of the parts they match, in body
@@ -277,7 +285,7 @@ Inference is separate from declared types and never trusts specs.
   ending it, or a variable bound to one, nested at any depth) splits into one
   function type per clause of that fact, its parameters' facts met with the
   arguments they name. Function types of equal inputs merge
-  (their results join); past 8 the last ones merge into one, inputs and
+  (their results join); past 32 the last ones merge into one, inputs and
   results joined. Recursive components iterate them with the results, each
   round joining (then widening) each type's result; a component that does
   not converge keeps only its union summaries. An anonymous fun's fact keeps
@@ -381,7 +389,7 @@ clause.
   it over the union of both parameter lists, inputs met. Types that can
   never be entered (an input `none()`, or within an earlier exact type's
   inputs) are dropped, so are parameters whose facts are the same in every
-  type; equal inputs merge and past 8 types the last ones merge (58K). A
+  type; equal inputs merge and past 32 types the last ones merge (58K). A
   construct whose remaining types all give the same value, or that narrows
   no parameter, is its plain join.
 - Every other consumer reads the erased fact, the join of the clauses'

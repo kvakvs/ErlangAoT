@@ -84,7 +84,7 @@ Complete for the selected scope; the plan steps hold criteria and evidence.
   delivered: fact domain, literal/operator/container/fun facts, caller
   inputs, narrowing by patterns, guards and uses, spec contradictions,
   per-clause function types and call selection, per-call re-analysis,
-  dependent facts of `case`/`if`/`try ... of`, nonempty list cells,
+  dependent facts of `case`/`if`/`try ... of`, nonempty list cells, `apply/2,3` calls,
   `--print-types` trailing `% Type` notes; contract
   [semantic](../docs/semantic.md#inference)):
   [ ] a `case` on a variable that itself depends on an argument splitting over

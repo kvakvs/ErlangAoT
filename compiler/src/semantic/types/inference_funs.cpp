@@ -16,9 +16,9 @@ std::optional<std::size_t> arity_of(const Integer &arity) {
                : std::nullopt;
 }
 
-// The fact fun F/A sees: its function's function types (or arity and result) as inferred so far, recorded so a later
-// pass can check it.
-Id local_fun(Inference &inference, const Function *target, const std::size_t arity) {
+} // namespace
+
+Id function_fun(Inference &inference, const Function *target, const std::size_t arity) {
     Lattice lattice(inference.graph);
     const auto summary = target ? inference.functions.find(target) : inference.functions.end();
     if (inference.opaque_funs || summary == inference.functions.end()) {
@@ -28,7 +28,6 @@ Id local_fun(Inference &inference, const Function *target, const std::size_t ari
     inference.fun_reads.insert_or_assign(target, fact);
     return fact;
 }
-} // namespace
 
 std::optional<Id> fun_reference_fact(Inference &inference, const FunctionRef function,
                                      const ast::Expression &expression) {
@@ -41,7 +40,7 @@ std::optional<Id> fun_reference_fact(Inference &inference, const FunctionRef fun
         // A fun naming an auto-imported builtin is erlang:F/A, whose result is unknown here.
         const bool builtin = function.function->builtin_funs.contains(&expression);
         const auto *target = builtin ? nullptr : fun_target(*function.module, *reference);
-        return local_fun(inference, target, *arity);
+        return function_fun(inference, target, *arity);
     }
     if (const auto *reference = std::get_if<ast::RemoteFunReference>(&expression.value)) {
         const auto *literal = std::get_if<Integer>(&reference->arity);

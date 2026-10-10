@@ -47,7 +47,8 @@ def inferred(tool, path):
                             timeout=120, check=False)
     if result.returncode != 0:
         sys.exit(f'{path.name}: --print-types failed:\n{result.stderr}')
-    own = result.stdout.split('\n%% module ', 1)[0]
+    # The fixture's own module comes first: everything before the second `%% module` header line.
+    own = '\n'.join(result.stdout.split('\n%% module ', 2)[:2])
     return {key(match.group(1)): match.group(1) for match in map(INFERRED.match, own.splitlines()) if match}
 
 

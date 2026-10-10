@@ -8,6 +8,9 @@ namespace clause::semantic::types {
 // The fact of fun F/A (its arity and the function's inferred result) or fun M:F/A (its arity, any result); none for
 // another expression.
 std::optional<Id> fun_reference_fact(Inference &inference, FunctionRef function, const ast::Expression &expression);
+// The fact fun F/A or apply(M, F, Args) sees of batch function `target` (null: unknown): its function types (or
+// arity and result) as inferred so far, recorded so a later pass can check it.
+Id function_fun(Inference &inference, const Function *target, std::size_t arity);
 // The fact of a fun of a function: its function types, else a fun of `arity` returning its result.
 Id summary_fun(Lattice &lattice, const Summary &summary, std::size_t arity);
 // The result of calling a value of fact `callee` with arguments of facts `arguments`: the joined results of the

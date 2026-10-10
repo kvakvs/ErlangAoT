@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <tuple>
 
 namespace clause::semantic::types {
 struct Fact {
@@ -55,7 +56,7 @@ struct Dependent {
 };
 
 // Function types a function or fun keeps at most; past it the last ones merge into one.
-inline constexpr std::size_t FUNCTION_TYPES = 8;
+inline constexpr std::size_t FUNCTION_TYPES = 32;
 
 struct Summary {
     // Inputs are term() for exported functions and functions fun F/A names, else their callers' joined arguments.
@@ -85,6 +86,8 @@ struct Inference {
     std::set<const Function *> solving;
     // Set for a last pass in which fun F/A has an unknown result, when passes did not settle.
     bool opaque_funs = false;
+    // The exported functions of the batch by module, name and arity (UTF-8), which apply(M, F, Args) can call.
+    std::map<std::tuple<std::string, std::string, std::size_t>, const Function *> exported;
     // Members of recursive components, whose calls are never re-analysed.
     std::set<const Function *> recursive;
     // How many callee re-analyses for a call are nested now, and the work they spent in the current pass.

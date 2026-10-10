@@ -5,6 +5,7 @@
 #include "../records.hpp"
 #include "dependent.hpp"
 #include "function_types.hpp"
+#include "inference_apply.hpp"
 #include "inference_bindings.hpp"
 #include "inference_funs.hpp"
 #include "inference_inputs.hpp"
@@ -295,18 +296,48 @@ std::vector<Fact> argument_facts(const Inference &inference, const ast::Module &
     return result;
 }
 
-// A call of a value: an anonymous fun bound to the called variable is evaluated with the arguments; otherwise the
-// value's fact gives the result.
-Fact value_call(Inference &inference, const FunctionRef function, const ast::CallExpression &call,
-                BindingFacts &bindings, std::size_t &work) {
+// A call of the value `target` reads with arguments of facts `arguments`: an anonymous fun bound to the variable is
+// evaluated with them; otherwise the value's fact gives the result.
+Fact called_value(Inference &inference, const FunctionRef function, const ast::ExprId &target,
+                  const std::vector<Fact> &arguments, BindingFacts &bindings, std::size_t &work) {
     const auto &syntax = *function.module->syntax;
-    const auto target = ungroup(syntax, call.target);
-    const auto arguments = argument_facts(inference, syntax, call);
     if (const auto lambda = bindings.lambda(target); lambda && bindings.depth < INSTANCE_DEPTH) {
         return instantiate(inference, function, bindings, *lambda, arguments, work);
     }
     Lattice lattice(inference.graph);
     return {call_value(lattice, recorded_fact(inference, syntax, target).type, arguments)};
+}
+
+// A call of a value, F(Args).
+Fact value_call(Inference &inference, const FunctionRef function, const ast::CallExpression &call,
+                BindingFacts &bindings, std::size_t &work) {
+    const auto &syntax = *function.module->syntax;
+    return called_value(inference, function, ungroup(syntax, call.target), argument_facts(inference, syntax, call),
+                        bindings, work);
+}
+
+// apply(F, Args) calls the value F, apply(M, F, Args) the exported batch function M:F/A, with the arguments Args
+// holds (docs/semantic.md#inference); none for other calls and when the arguments or the target are unknown.
+std::optional<Fact> apply_fact(Inference &inference, const FunctionRef function, const ast::Expression &expression,
+                               const ast::CallExpression &call, BindingFacts &bindings, std::size_t &work) {
+    const auto service = function.function->services.find(&expression);
+    if (service == function.function->services.end() || !service->second.apply()) {
+        return std::nullopt;
+    }
+    const auto &syntax = *function.module->syntax;
+    Lattice lattice(inference.graph);
+    const auto first = recorded_fact(inference, syntax, call.arguments.front()).type;
+    if (call.arguments.size() == 2) {
+        const auto arguments =
+            applied_arguments(inference, lattice, syntax, call.arguments.back(), fun_arity(lattice, first));
+        return arguments ? std::optional{called_value(inference, function, ungroup(syntax, call.arguments.front()),
+                                                      *arguments, bindings, work)}
+                         : std::nullopt;
+    }
+    const auto arguments = applied_arguments(inference, lattice, syntax, call.arguments.back(), std::nullopt);
+    const auto name = recorded_fact(inference, syntax, call.arguments.at(1)).type;
+    const auto target = arguments ? named_fun(inference, {first, name}, arguments->size()) : std::nullopt;
+    return target ? std::optional{Fact{call_value(lattice, *target, *arguments)}} : std::nullopt;
 }
 
 // A fun value: fun F/A and fun M:F/A by the function they name, an anonymous fun by the function types of its
@@ -434,6 +465,9 @@ Fact call_fact(Inference &inference, const FunctionRef function, const ast::Expr
     }
     if (fun_call(syntax, call)) {
         return value_call(inference, function, call, bindings, work);
+    }
+    if (const auto applied = apply_fact(inference, function, expression, call, bindings, work)) {
+        return *applied;
     }
     if (opaque_call(function, expression, call)) {
         return {inference.graph.top()};
@@ -704,10 +738,17 @@ bool settled(Inference &inference) {
     });
 }
 
-// Index each call's callee and the members of recursive components.
+// Index each call's callee, the exported functions and the members of recursive components.
 void index_calls(Inference &inference, const CallGraph &calls) {
     for (const auto &call : calls.calls) {
         inference.callees.emplace(&call.caller.module->syntax->expression(call.expression), call.callee);
+    }
+    for (const auto function : calls.order) {
+        if (function.function->exported) {
+            const auto &key = function.function->key;
+            inference.exported.emplace(std::tuple{utf8(function.module->name), utf8(key.name), key.arity},
+                                       function.function);
+        }
     }
     for (const auto &component : calls.components) {
         for (const auto member : component.recursive ? component.members : std::vector<FunctionRef>{}) {
