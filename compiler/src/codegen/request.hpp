@@ -38,8 +38,9 @@ struct CompilationInput {
 struct StartupRequest {
     // Batch index of the entry module; its descriptor and spelling identify the entry at run time.
     std::size_t module = 0;
-    // Exact UTF-8 entry function name; the entry arity is always 1 (the argument list).
+    // Exact UTF-8 entry function name and arity: 1 receives the argument list, 0 runs without it.
     std::string function;
+    std::size_t arity = 1;
     // Escript entries exit with status 127 on uncaught exceptions.
     bool escript = false;
 };

@@ -444,7 +444,8 @@
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in Git history; summary in docs/validation.md.
 
-- Executable entry: `--entry`/manifest `entry` or the sole `main/1` exporter, resolved in
+- Executable entry: `--entry`/manifest `entry` (`F/1`, else an exported `F/0` run without arguments: startup flag
+  `startup_no_arguments`) or the sole `main/1` exporter, resolved in
   `driver/entry` right after semantic indexing; contract in `docs/executables.md`. `#!` sources are escripts: `driver/escript` rewrites
   the header, `semantic/escript` exports `main/1`; entry detection prefers them.
 - Behaviours (step 65A, `docs/semantic.md#behaviours`): before `ParserSession::finish`, `driver/predefined` lexes

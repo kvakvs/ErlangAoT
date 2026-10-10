@@ -17,17 +17,18 @@ function(check name code stderr)
 endfunction()
 
 set(not_defined "entry function helper:main/1 is not defined")
-set(wrong_arity "helper.erl:5:1: entry function helper:run/1 is not defined; found run/0, but the entry receives one argument")
+set(wrong_arity "helper.erl:11:1: entry function helper:pair/1 is not defined; found pair/2, but the entry takes the argument list \\(FUNCTION/1\\) or nothing \\(FUNCTION/0\\)")
 set(unexported "helper.erl:9:1: entry function helper:hidden/1 is not exported")
 set(missing "entry module nope is not among the compiled modules")
 
 # Positional inputs: explicit entries validate in every compiling mode.
 check(valid_default_function 0 "^$" --entry app app.erl helper.erl)
 check(valid_named_function 0 "^$" --entry helper:start helper.erl)
+check(valid_no_arguments 0 "^$" --entry helper:run helper.erl)
 check(valid_emit_ir 0 "^$" --entry app --emit llvm-ir --artifact-dir ir app.erl)
 check(missing_module 1 "^error: --entry: ${missing}\n$" --entry nope app.erl)
 check(missing_function 1 "helper.erl:2:1: ${not_defined}\n$" --entry helper app.erl helper.erl)
-check(wrong_arity 1 "${wrong_arity}" --entry helper:run helper.erl)
+check(wrong_arity 1 "${wrong_arity}" --entry helper:pair helper.erl)
 check(unexported 1 "${unexported}\n$" --entry helper:hidden helper.erl)
 check(unicode_module 1 "entry module möd is not among" --entry "möd" app.erl)
 
@@ -37,7 +38,7 @@ check(detected 1 "${linked}" -o out --runtime-library absent.lib app.erl helper.
 check(selected_over_detection 1 "${linked}" -o out --runtime-library absent.lib --entry other app.erl other.erl)
 # Hints name the selection spelling; only project targets mention the manifest key.
 set(hint "; choose the entry with --entry MODULE\\[:FUNCTION\\]")
-set(arity_hint " \\(an exported FUNCTION/1; FUNCTION defaults to main\\)\n$")
+set(arity_hint " \\(an exported FUNCTION/1, or FUNCTION/0 run without the program arguments; FUNCTION defaults to main\\)\n$")
 set(manifest_hint " or with entry = \"MODULE\\[:FUNCTION\\]\" in this target's \\[\\[targets\\]\\] table of the project manifest")
 check(none_exported 1 "^error: no entry point: no module exports main/1${hint}${arity_hint}" -o out helper.erl)
 check(ambiguous 1 "^error: ambiguous entry point: main/1 is exported by app, other${hint}${arity_hint}" -o out app.erl other.erl)

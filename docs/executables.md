@@ -8,6 +8,9 @@ project build links each selected executable target to its manifest `output`
 ## Entry selection
 
 The entry is an exported function of arity 1 that receives the argument list.
+A selected `FUNCTION` without `FUNCTION/1` may instead be an exported
+`FUNCTION/0`: it runs without the program arguments (runtime options are still
+taken out). The default (no selection) is always `main/1`.
 
 | Source | Spelling | Scope |
 | --- | --- | --- |
@@ -29,10 +32,10 @@ The entry is an exported function of arity 1 that receives the argument list.
 | Failure | Diagnostic (exit 1) |
 | --- | --- |
 | Module not in the batch | `<origin>: entry module M is not among the compiled modules` (origin: `--entry` or manifest `file:line:col [target t] (entry)`) |
-| No `F/1` | `<file>:<line>:<col>: entry function M:F/1 is not defined` at the module declaration |
-| Only other arities | `... is not defined; found F/N, but the entry receives one argument (the argument list)` at that definition |
-| `F/1` not exported | `<file>:<line>:<col>: entry function M:F/1 is not exported` at the definition |
-| No selection, no `main/1` export | `no entry point: no module exports main/1; choose the entry with --entry MODULE[:FUNCTION] (an exported FUNCTION/1; FUNCTION defaults to main)` |
+| No `F/1` nor `F/0` | `<file>:<line>:<col>: entry function M:F/1 is not defined` at the module declaration |
+| Only other arities | `... is not defined; found F/N, but the entry takes the argument list (FUNCTION/1) or nothing (FUNCTION/0)` at that definition |
+| `F/1` (else `F/0`) not exported | `<file>:<line>:<col>: entry function M:F/A is not exported` at the definition |
+| No selection, no `main/1` export | `no entry point: no module exports main/1; choose the entry with --entry MODULE[:FUNCTION] (an exported FUNCTION/1, or FUNCTION/0 run without the program arguments; FUNCTION defaults to main)` |
 | No selection, several | `ambiguous entry point: main/1 is exported by a, b; choose the entry with ...` (same hint) |
 
 For project targets the hint also names the manifest key: `... --entry MODULE[:FUNCTION] or with
@@ -42,7 +45,7 @@ entry = "MODULE[:FUNCTION]" in this target's [[targets]] table of the project ma
 [[targets]]
 name = "app"
 sources = ["src/*.erl"]
-entry = "app:start"   # calls app:start/1; plain "app" calls app:main/1
+entry = "app:start"   # calls app:start/1 (or app:start/0); plain "app" calls app:main/1
 ```
 
 ## Arguments

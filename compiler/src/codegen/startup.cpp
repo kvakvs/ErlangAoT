@@ -29,7 +29,7 @@ llvm::Constant *descriptors(llvm::Module &output, const std::span<const std::uni
                                     "startup.modules");
 }
 
-// Constant abi::v1::StartupDescriptor naming the modules and the arity-1 entry.
+// Constant abi::v1::StartupDescriptor naming the modules and the entry (arity 1, or 0 without the arguments).
 llvm::GlobalVariable *descriptor(llvm::Module &output, const std::span<const std::unique_ptr<semantic::Module>> modules,
                                  const StartupRequest &request, llvm::IntegerType *word) {
     llvm::IRBuilder<> builder(output.getContext());
@@ -42,7 +42,8 @@ llvm::GlobalVariable *descriptor(llvm::Module &output, const std::span<const std
         type, {builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()), descriptors(output, modules),
                size(modules.size()), spelling(output, module, "startup.module"), size(module.size()),
                spelling(output, request.function, "startup.function"), size(request.function.size()),
-               builder.getInt32(request.escript ? abi::v1::startup_escript : 0)});
+               builder.getInt32((request.escript ? abi::v1::startup_escript : 0U) |
+                                (request.arity == 0 ? abi::v1::startup_no_arguments : 0U))});
     return new llvm::GlobalVariable(output, type, true, llvm::GlobalValue::PrivateLinkage, data, "startup.descriptor");
 }
 

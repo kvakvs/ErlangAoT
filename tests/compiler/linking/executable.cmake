@@ -56,6 +56,11 @@ run("sub dir/app" 0 "[\"a b\"]\n" "a b")
 run("sub dir/app" 3 "" halt)
 compile(escript 0 "^$" -o boom boom.escript)
 run(boom 127 "")
+# A FUNCTION/0 entry ignores the program arguments; FUNCTION/1 wins when both are exported.
+compile(no_arguments 0 "^$" --entry noargs:start -o noargs noargs.erl)
+run(noargs 0 "started\n" ignored)
+compile(both_arities 0 "^$" --entry noargs:both -o both noargs.erl)
+run(both 0 "{one,[\"x\"]}\n" x)
 # A project target links with an explicit -o (exactly one selected target); manifest and CLI entries apply.
 compile(project 0 "^$" --project project.toml -o project)
 run(project 0 "[\"x\"]\n" x)

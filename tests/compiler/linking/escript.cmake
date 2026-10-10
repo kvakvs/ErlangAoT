@@ -38,7 +38,7 @@ check(named_entry 1 "^$" "^${linking}" -o out ${absent} named.escript)
 check(preferred_over_module 1 "^$" "${linking}" -o out ${absent} greet app.erl)
 check(explicit_module_entry 1 "^$" "${linking}" -o out ${absent} --entry app greet app.erl)
 check(ambiguous_escripts 1 "^$" "ambiguous entry point: main/1 is exported by greet__escript, named" -o out greet named.escript)
-check(only_main_exported 1 "^$" "named.escript:7:1: entry function named:helper/1 is not defined; found helper/0"
+check(only_main_exported 1 "^$" "named.escript:7:1: entry function named:helper/0 is not exported"
     --entry named:helper named.escript)
 check(plain_module 1 "^$" "no entry point: no module exports main/1" -o out plain.erl)
 

@@ -9,6 +9,8 @@ inline constexpr int exit_escript_uncaught = 127;
 
 // Startup option bits; unknown bits are rejected as an ABI mismatch.
 inline constexpr std::uint32_t startup_escript = 1;
+// The entry is FUNCTION/0: it runs without the program arguments.
+inline constexpr std::uint32_t startup_no_arguments = 2;
 
 struct StartupDescriptor {
     // Reject a startup object built for another ABI revision or term width before reading further fields.
@@ -17,7 +19,8 @@ struct StartupDescriptor {
     // Borrow every module descriptor of the batch in registration order.
     const ModuleDescriptor *const *modules;
     std::size_t module_count;
-    // Borrow exact UTF-8 module/function spellings of the arity-1 entry.
+    // Borrow exact UTF-8 module/function spellings of the entry: arity 1 (the argument list), or 0 with
+    // startup_no_arguments.
     const char *entry_module;
     std::size_t entry_module_size;
     const char *entry_function;

@@ -16,7 +16,8 @@ struct EntryRequest {
 };
 
 struct ResolvedEntry {
-    // Batch index of the entry module and the arity-1 function the startup code will call.
+    // Batch index of the entry module and the function the startup code will call: arity 1 receives the argument
+    // list, arity 0 runs without it.
     std::size_t module = 0;
     semantic::FunctionKey function;
     // Escript entries exit with status 127 on uncaught exceptions, like OTP escript.

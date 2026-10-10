@@ -34,5 +34,5 @@ std::optional<EntryName> parse_entry(std::string_view text) {
     return EntryName{*module, *function};
 }
 
-std::string entry_text(const EntryName &entry) { return utf8(entry.module) + ":" + utf8(entry.function) + "/1"; }
+std::string entry_text(const EntryName &entry) { return utf8(entry.module) + ":" + utf8(entry.function); }
 } // namespace clause::project

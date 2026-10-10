@@ -55,8 +55,8 @@ int runtime_failure(std::string_view what) noexcept {
 bool compatible(const StartupDescriptor &startup) {
     constexpr auto bits = sizeof(abi::v1::TermWord) * 8;
     if (startup.abi_version != abi::v1::version || startup.term_bits != bits ||
-        (startup.flags & ~abi::v1::startup_escript) != 0 || (startup.module_count != 0 && !startup.modules) ||
-        !startup.entry_module || !startup.entry_function) {
+        (startup.flags & ~(abi::v1::startup_escript | abi::v1::startup_no_arguments)) != 0 ||
+        (startup.module_count != 0 && !startup.modules) || !startup.entry_module || !startup.entry_function) {
         return false;
     }
     return std::ranges::all_of(std::span(startup.modules, startup.module_count), [](const auto *module) {
@@ -98,13 +98,18 @@ int failed_entry(const CallFailure &failure, bool escript) {
 // Whether the program is an escript, whose uncaught exceptions report and exit differently.
 bool is_escript(const StartupDescriptor &startup) { return (startup.flags & abi::v1::startup_escript) != 0; }
 
+// The entry's arity: 1 receives the argument list, 0 runs without it.
+unsigned entry_arity(const StartupDescriptor &startup) {
+    return (startup.flags & abi::v1::startup_no_arguments) != 0 ? 0 : 1;
+}
+
 // Release a context the program no longer needs; a teardown failure replaces `status`.
 int released(Runtime &runtime, ProcessContext &context, int status) {
     const auto destroyed = runtime.destroy_context(&context);
     return destroyed == Status::ok ? status : runtime_failure("process teardown: " + status_name(destroyed));
 }
 
-// The frame of the exported arity-1 entry function; null when no registered module exports it with a frame.
+// The frame of the exported entry function; null when no registered module exports it with a frame.
 const abi::v1::FrameDescriptor *entry_frame(ProcessContext &context, const StartupDescriptor &startup) {
     TermFactory factory(context);
     const auto module_atom = factory.atom({startup.entry_module, startup.entry_module_size});
@@ -113,19 +118,21 @@ const abi::v1::FrameDescriptor *entry_frame(ProcessContext &context, const Start
         return nullptr;
     }
     return static_cast<const abi::v1::FrameDescriptor *>(
-        context.code_server().function_frame(*module_atom, *function_atom, 1));
+        context.code_server().function_frame(*module_atom, *function_atom, entry_arity(startup)));
 }
 
 // Call an entry export without a frame (a host function) to completion in the main process.
 int call_host_entry(ProcessContext &main, const StartupDescriptor &startup, const Term &arguments) {
     const std::string_view module(startup.entry_module, startup.entry_module_size);
     const std::string_view function(startup.entry_function, startup.entry_function_size);
-    const auto entry = main.code_server().resolve({module, function, 1});
+    const auto arity = entry_arity(startup);
+    const auto entry = main.code_server().resolve({module, function, arity});
     if (!entry) {
-        return runtime_failure("entry function " + std::string(module) + ":" + std::string(function) +
-                               "/1 is not registered");
+        return runtime_failure("entry function " + std::string(module) + ":" + std::string(function) + "/" +
+                               std::to_string(arity) + " is not registered");
     }
-    const auto result = entry->call(main, std::array{arguments});
+    const auto result =
+        arity == 0 ? entry->call(main, std::span<const Term>{}) : entry->call(main, std::array{arguments});
     return result ? 0 : failed_entry(result.error(), is_escript(startup));
 }
 
@@ -141,7 +148,8 @@ int run_processes(Runtime &runtime, ProcessContext &main, const StartupDescripto
     return released(runtime, ended, status);
 }
 
-// Build argv without the runtime options and run the arity-1 entry as the main process; no context remains after.
+// Build argv without the runtime options and run the entry as the main process, passing argv to an arity-1 entry;
+// no context remains after.
 int run_entry(Runtime &runtime, ProcessContext &main, const StartupDescriptor &startup, int argc, char **argv,
               std::size_t skip) {
     const auto arguments = program_arguments(main, argc, argv, skip);
@@ -152,7 +160,9 @@ int run_entry(Runtime &runtime, ProcessContext &main, const StartupDescriptor &s
     if (!frame) {
         return released(runtime, main, call_host_entry(main, startup, *arguments));
     }
-    main.stack().registers()[0] = arguments->word();
+    if (entry_arity(startup) == 1) {
+        main.stack().registers()[0] = arguments->word();
+    }
     if (!detail::Executor::of(main).start(main, *frame)) {
         const auto &failure = main.generated_calls().failure();
         const int status =

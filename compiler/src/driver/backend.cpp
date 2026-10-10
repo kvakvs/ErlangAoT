@@ -128,7 +128,7 @@ std::optional<codegen::StartupRequest> startup_request(const Analysis &analysis)
         return std::nullopt;
     }
     const auto &entry = *analysis.entry;
-    return codegen::StartupRequest{entry.module, utf8(entry.function.name), entry.escript};
+    return codegen::StartupRequest{entry.module, utf8(entry.function.name), entry.function.arity, entry.escript};
 }
 
 // Analyze before constructing LLVM state; moving the vector preserves borrowed AST addresses.

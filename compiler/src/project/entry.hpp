@@ -18,6 +18,6 @@ struct SelectedEntry {
 
 // Decode MODULE or MODULE:FUNCTION (function defaults to main); reject malformed atom text.
 std::optional<EntryName> parse_entry(std::string_view text);
-// Render an entry as MODULE:FUNCTION/1 for diagnostics.
+// Render an entry as MODULE:FUNCTION for diagnostics; callers add the arity.
 std::string entry_text(const EntryName &entry);
 } // namespace clause::project
