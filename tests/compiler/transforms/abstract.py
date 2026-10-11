@@ -1,4 +1,5 @@
-"""Compare clau --print-abstr with OTP's epp forms for every fixture (added for parse transforms)."""
+"""Compare clau --print-abstr with OTP's epp forms for every fixture, from its source and from the golden itself as a
+.abstr input, which must print back unchanged (added for parse transforms)."""
 import pathlib
 import subprocess
 import sys
@@ -9,11 +10,11 @@ def main():
     tool, compare, fixtures, work = (pathlib.Path(argument).resolve() for argument in sys.argv[1:])
     work.mkdir(parents=True, exist_ok=True)
     failures = []
-    for golden in sorted(fixtures.glob("*.abstr")):
-        source = golden.with_suffix(".erl").name
+    for golden, source in [(golden, name) for golden in sorted(fixtures.glob("*.abstr"))
+                           for name in (golden.with_suffix(".erl").name, golden.name)]:
         result = subprocess.run([str(tool), "--print-abstr", source], cwd=fixtures, capture_output=True,
                                 timeout=60, check=False)
-        actual = work / golden.name
+        actual = work / (source + ".out")
         actual.write_bytes(result.stdout)
         if result.returncode != 0:
             failures.append(f"{source}: exit {result.returncode}\n{result.stderr.decode('utf-8', 'replace')}")

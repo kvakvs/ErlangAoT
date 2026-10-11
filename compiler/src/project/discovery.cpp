@@ -49,7 +49,8 @@ void prune(fs::recursive_directory_iterator &iterator, const Walk &walk) {
 // Filter before following file symlinks so dangling selected files produce diagnostics.
 void collect(const fs::directory_entry &entry, Walk &walk, std::vector<fs::path> &result) {
     (void)filename_scalars(path_text(entry.path().filename()), walk.site);
-    if (entry.path().extension() != ".erl") {
+    // .abstr files of abstract format forms are sources too (docs/transforms.md).
+    if (entry.path().extension() != ".erl" && entry.path().extension() != ".abstr") {
         return;
     }
     const auto relative = path_text(entry.path().lexically_relative(walk.root));

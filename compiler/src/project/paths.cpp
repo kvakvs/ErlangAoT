@@ -51,8 +51,9 @@ bool candidate(const std::filesystem::path &path, const Site &site) {
 std::filesystem::path literal_source(const std::filesystem::path &base, const Text &source,
                                      const std::span<const std::filesystem::path> roots) {
     const auto supplied = native_path(source.value);
-    if (supplied.extension() != ".erl") {
-        fail(source.site, "source must have .erl extension");
+    // .abstr files of abstract format forms are sources too (docs/transforms.md).
+    if (supplied.extension() != ".erl" && supplied.extension() != ".abstr") {
+        fail(source.site, "source must have .erl or .abstr extension");
     }
     auto direct = absolute_path(base, supplied);
     if (candidate(direct, source.site)) {

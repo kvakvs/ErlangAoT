@@ -188,7 +188,7 @@ std::optional<std::string> parse_options(std::span<char *> remaining, Options &o
         // Listing replaces the other check/print actions; the frontend parses without printing.
         // Added for --print-inputs.
         options.print_pp = options.print_ast = options.print_source = options.parse_check = false;
-        options.print_abstr = false; // Added for parse transforms.
+        options.print_abstr = false;
     }
     return validate_options(options);
 }

@@ -75,7 +75,7 @@ std::vector<std::string> frontend_actions(const Options &options) {
     static constexpr std::array flags{
         std::pair{&Options::print_pp, "print-pp"}, std::pair{&Options::parse_check, "parse-check"},
         std::pair{&Options::print_ast, "print-ast"}, std::pair{&Options::print_source, "print-source"},
-        std::pair{&Options::print_abstr, "print-abstr"}}; // print-abstr added for parse transforms.
+        std::pair{&Options::print_abstr, "print-abstr"}};
     std::vector<std::string> result;
     for (const auto &[flag, name] : flags) {
         if (options.*flag) {

@@ -751,24 +751,37 @@ Backlog: D03. Depends on: [73B](#step-73b).
 Backlog: D03. Depends on: [73C](#step-73c).
 
 - Success criteria
-  - [ ] A forms-to-AST reader builds the owned AST through the existing
+  - [x] A forms-to-AST reader builds the owned AST through the existing
     builder for every shape the writer emits and every shape OTP's
     `erl_parse` can produce (forms a transform builds need not come from
     source syntax). Annotations become source locations: line and optional
     column, the file from preceding `-file` attributes, `generated`.
-  - [ ] Invalid forms are diagnosed at their annotation, with `erl_lint`
+  - [x] Invalid forms are diagnosed at their annotation, with `erl_lint`
     wording where OTP reports the same problem; unsupported shapes are
     explicit diagnostics.
-  - [ ] `.abstr` files are accepted as compiler inputs, positional and in
+  - [x] `.abstr` files are accepted as compiler inputs, positional and in
     projects, like `erlc File.abstr`, and compile through the normal lint,
     semantic and codegen stages.
 - Tests
-  - [ ] Round trip: export, import, export gives identical forms for every
+  - [x] Round trip: export, import, export gives identical forms for every
     73C fixture.
-  - [ ] Executable goldens: OTP-generated `.abstr` fixtures (including forms
+  - [x] Executable goldens: OTP-generated `.abstr` fixtures (including forms
     no source can spell, e.g. `generated` annotations or a `-file` that
     moves locations) compile, link and print the same stdout as their
     `.erl` originals; diagnostics for invalid forms.
+- Evidence (2026-10-11): `transforms_abstract` now also feeds every OTP
+  golden back as a `.abstr` input: printed back unchanged (operators and
+  nested lists, explicit `throw:`/`:_`, zip annotations decided with
+  erl_parse's first/last_anno). `transforms_inputs`: OTP-generated,
+  hand-crafted (`generated` annotations, a variable no source can spell, an
+  explicit `-file` moving lines) and line-only `.abstr` programs link and
+  print the same stdout as OTP 29.1.1 runs of them; a project target lists
+  a `.abstr`; three malformed forms give located errors. `generated` is
+  ignored (difference row).
+  Gate: fresh fast CTest 238/239 (only the earlier `codegen_resource_cli`
+  failure); Lizard and clang-tidy findings in the importer were fixed
+  (error-context parameters removed, functions split), then the transforms
+  tests and check-quality ran clean.
 
 <a id="step-73e"></a>
 

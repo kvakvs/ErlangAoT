@@ -1,36 +1,10 @@
 // Added for parse transforms: export entry point, annotations and clauses shared by every construct.
+#include "annotations.hpp"
 #include "export_writer.hpp"
 #include "term_text.hpp"
 
 namespace clause::transforms {
 namespace {
-// Whether a term is a {Line, Column} annotation.
-bool annotation(const Terms &terms, const TermId id) {
-    const auto &node = terms.node(id);
-    return node.kind_ == TermKind::tuple && node.children_.size() == 2 && terms.small_integer(node.children_[0]) &&
-           terms.small_integer(node.children_[1]);
-}
-
-// An annotation's location as a comparable pair.
-std::pair<std::int64_t, std::int64_t> position(const Terms &terms, const TermId anno) {
-    const auto &node = terms.node(anno);
-    return {*terms.small_integer(node.children_[0]), *terms.small_integer(node.children_[1])};
-}
-
-// The later of an optional annotation and another one.
-std::optional<TermId> later(const Terms &terms, const std::optional<TermId> latest, const TermId candidate) {
-    return !latest || position(terms, *latest) < position(terms, candidate) ? candidate : *latest;
-}
-
-// The children of an abstract node that may hold annotations: all after the tag, except a bin_element's type list.
-std::span<const TermId> annotated_children(const Terms &terms, const TermNode &node) {
-    std::span<const TermId> children = node.children_;
-    if (node.kind_ == TermKind::tuple && !children.empty() && terms.is_atom(children[0], U"bin_element")) {
-        return children.first(std::min<std::size_t>(children.size(), 4));
-    }
-    return children;
-}
-
 // The main file's last line as numbered after an explicit -file directive of the main file: epp counts the
 // directive's own line as the line it names.
 std::optional<std::size_t> eof_line(const ast::Module &syntax, const ast::Form &form, const Source &main) {
@@ -54,6 +28,9 @@ std::optional<std::size_t> eof_line(const ast::Module &syntax, const ast::Form &
 } // namespace
 
 TermId AbstractWriter::anno(const LogicalLocation &location) {
+    if (location.column == 0) {
+        return terms_.integer(static_cast<std::int64_t>(location.line));
+    }
     return terms_.tuple({terms_.integer(static_cast<std::int64_t>(location.line)),
                          terms_.integer(static_cast<std::int64_t>(location.column))});
 }
@@ -84,19 +61,7 @@ std::u32string_view AbstractWriter::token_text(const ast::NodeSource &source, co
 }
 
 TermId AbstractWriter::last_anno(const TermId pattern) {
-    std::optional<TermId> latest;
-    std::vector<TermId> pending{pattern};
-    while (!pending.empty()) {
-        const auto &node = terms_.node(pending.back());
-        pending.pop_back();
-        for (const auto child : annotated_children(terms_, node)) {
-            if (annotation(terms_, child)) {
-                latest = later(terms_, latest, child);
-            } else {
-                pending.push_back(child);
-            }
-        }
-    }
+    const auto latest = last_annotation(terms_, pattern);
     return latest ? *latest : anno({.file = {}, .line = 1, .column = 1});
 }
 
@@ -186,18 +151,24 @@ TermId AbstractWriter::form(const ast::Form &form) {
                 {terms_.atom(function->name.name), terms_.integer(arity), terms_.list(std::move(clauses))});
 }
 
-AbstractModule export_module(const ast::Module &syntax, const std::span<const ast::FormId> forms, const Source &main) {
+AbstractModule export_module(const ast::Module &syntax, const std::span<const ast::FormId> forms, const Position &end) {
     AbstractModule result;
     AbstractWriter writer(syntax, result.terms_);
-    auto end = main.position(main.text.size());
+    result.forms_.reserve(forms.size() + 1);
     for (const auto &id : forms) {
-        const auto &form = syntax.form(id);
-        result.forms_.push_back(writer.form(form));
-        end.line = eof_line(syntax, form, main).value_or(end.line);
+        result.forms_.push_back(writer.form(syntax.form(id)));
     }
     const auto eof = writer.anno({.file = {}, .line = end.line, .column = end.column});
     result.forms_.push_back(result.terms_.tuple({result.terms_.atom(U"eof"), eof}));
     return result;
+}
+
+Position end_of(const ast::Module &syntax, const std::span<const ast::FormId> forms, const Source &main) {
+    auto end = main.position(main.text.size());
+    for (const auto &id : forms) {
+        end.line = eof_line(syntax, syntax.form(id), main).value_or(end.line);
+    }
+    return end;
 }
 
 std::string abstract_text(const AbstractModule &module) {

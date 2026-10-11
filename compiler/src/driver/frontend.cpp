@@ -8,6 +8,7 @@
 #include "escript.hpp"
 #include "options.hpp"
 #include "predefined.hpp"
+#include "transforms/abstract_input.hpp"
 #include "transforms/export.hpp"
 #include <algorithm>
 #include <clause/compiler/parser.hpp>
@@ -61,8 +62,16 @@ void print_form(const PreprocessorEvent &event) {
 // Own syntax for the entire batch before borrowing it in semantic side tables.
 using Inputs = std::vector<codegen::CompilationInput>;
 
-// Print a parsed module as the request asks: as a syntax tree, as source, as abstract forms of the main source.
-void print_parsed(const FrontendRequest &request, const ast::Module &module, const Source &main) {
+// What a parsing pass leaves besides the syntax: the module's features, whether its input failed, and where its
+// main source ends for the abstract format's eof form.
+struct ParsedModule {
+    FeatureSnapshot features;
+    bool failed;
+    std::function<Position(const ast::Module &)> end;
+};
+
+// Print a parsed module as the request asks: as a syntax tree, as source, as abstract forms.
+void print_parsed(const FrontendRequest &request, const ast::Module &module, const ParsedModule &parsed) {
     if (request.print_ast) {
         print_ast(std::cout, module);
     }
@@ -71,7 +80,7 @@ void print_parsed(const FrontendRequest &request, const ast::Module &module, con
     }
     if (request.print_abstr) {
         // Added for parse transforms.
-        std::cout << transforms::abstract_text(transforms::export_module(module, module.forms(), main));
+        std::cout << transforms::abstract_text(transforms::export_module(module, module.forms(), parsed.end(module)));
     }
 }
 
@@ -89,21 +98,18 @@ void parse_events(PreprocessorSession &session, const FrontendRequest &request, 
     }
 }
 
-// Consume a parsing pass and dispatch successful modules to the requested final stage; compiled modules get OTP's
+// Finish a parsing pass and dispatch a successful module to the requested final stage; compiled modules get OTP's
 // predefined functions.
-bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
-                     const SourcePtr &source, const std::filesystem::path &path, const bool escript, Inputs &inputs) {
-    ParserSession parser;
-    parse_events(session, request, parser);
-    const auto predefined = request.compile && !parser.stopped()
-                                ? add_predefined(parser, session.features(), path, escript)
-                                : std::size_t{0};
-    auto result = std::move(parser).finish(session.features());
+bool finish_module(ParserSession &parser, const ParsedModule &parsed, const FrontendRequest &request,
+                   const DiagnosticSink &sink, const std::filesystem::path &path, const bool escript, Inputs &inputs) {
+    const auto predefined =
+        request.compile && !parser.stopped() ? add_predefined(parser, parsed.features, path, escript) : std::size_t{0};
+    auto result = std::move(parser).finish(parsed.features);
     for (const auto &diagnostic : result.diagnostics) {
         print_diagnostic(diagnostic, sink);
     }
-    print_parsed(request, result.module, *source);
-    if (result.failed || session.failed()) {
+    print_parsed(request, result.module, parsed);
+    if (result.failed || parsed.failed) {
         return true;
     }
     if (request.compile) {
@@ -113,6 +119,32 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
         inputs.back().predefined_ = predefined;
     }
     return false;
+}
+
+// Consume a preprocessing session as one module.
+bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
+                     const SourcePtr &source, const std::filesystem::path &path, const bool escript, Inputs &inputs) {
+    ParserSession parser;
+    parse_events(session, request, parser);
+    const auto end = [&source](const ast::Module &module) {
+        return transforms::end_of(module, module.forms(), *source);
+    };
+    return finish_module(parser, {session.features(), session.failed(), end}, request, sink, path, escript, inputs);
+}
+
+// A file of abstract format forms compiles like `erlc File.abstr`. Added for parse transforms.
+bool process_abstract(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink,
+                      Inputs &inputs) {
+    trace_ingestion(request.verbose, "parse", path);
+    ParserSession parser;
+    const auto file = transforms::parse_abstract_file(path, preprocessing_options(request), parser);
+    bool failed = false;
+    for (const auto &diagnostic : file.diagnostics_) {
+        print_diagnostic(diagnostic, sink);
+        failed = failed || diagnostic.severity == Severity::error;
+    }
+    const auto end = [position = file.end_](const ast::Module &) { return position; };
+    return finish_module(parser, {file.features_, failed, end}, request, sink, path, false, inputs);
 }
 
 // Read a source, rewriting a "#!" escript header and warning about ignored emulator arguments.
@@ -134,6 +166,9 @@ SourcePtr read_source(SourceManager &sources, const std::filesystem::path &path,
 // Keep source ownership and all mutable frontend state local to one file.
 bool process_module(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink,
                     Inputs &inputs) {
+    if (path.extension() == ".abstr") {
+        return process_abstract(path, request, sink, inputs);
+    }
     SourceManager sources;
     bool escript = false;
     const auto source = read_source(sources, path, sink, escript);
@@ -291,7 +326,7 @@ int process_inputs(const Options &options) {
         options.verbose,  options.preprocessing, options.backend};
     request.list_inputs = options.print_inputs; // Added for --print-inputs.
     request.print_source = options.print_source;
-    request.print_abstr = options.print_abstr; // Added for parse transforms.
+    request.print_abstr = options.print_abstr;
     if (options.output_explicit) {
         request.executable_output = options.output;
     }

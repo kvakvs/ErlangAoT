@@ -11,9 +11,11 @@ struct AbstractModule {
     std::vector<TermId> forms_;
 };
 
-// Export `forms` of the module as erl_parse/epp would produce them, with {Line, Column} annotations; the eof form
-// is the end of the main source file, counted from its last -file directive. Unsupported values throw TermError.
-AbstractModule export_module(const ast::Module &syntax, std::span<const ast::FormId> forms, const Source &main);
+// Export `forms` of the module as erl_parse/epp would produce them, with {Line, Column} annotations, ending with
+// {eof, End}. Unsupported values throw TermError.
+AbstractModule export_module(const ast::Module &syntax, std::span<const ast::FormId> forms, const Position &end);
+// The end of the main source as epp locates the eof form: lines counted from the main file's last -file directive.
+Position end_of(const ast::Module &syntax, std::span<const ast::FormId> forms, const Source &main);
 // Append each form's consult text on its own line.
 std::string abstract_text(const AbstractModule &module);
 } // namespace clause::transforms

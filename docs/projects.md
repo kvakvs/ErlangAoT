@@ -33,8 +33,10 @@ my_dependency = "vendor/my_dependency"
 - Target names: case-sensitive ASCII `[A-Za-z0-9_][A-Za-z0-9_.-]*`, unique. A
   name is a build target, not an LLVM triple.
 - `sources` (files and wildcard patterns) and `source_dirs` (recursive `.erl`
-  discovery) are optional, but a target needs at least one entry. Explicit files
-  must end in `.erl`; headers are dependencies, not inputs.
+  and `.abstr` discovery) are optional, but a target needs at least one entry.
+  Explicit files must end in `.erl`, or `.abstr` for abstract format forms
+  ([transforms](transforms.md#interchange)); headers are dependencies, not
+  inputs.
 - `options` fields are optional typed frontend options. `defines` use
   `NAME` (= `true`) or `NAME=ERLANG_LITERAL_TERM`; duplicates are errors. A
   feature cannot appear in both feature lists.

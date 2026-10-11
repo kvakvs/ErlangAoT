@@ -149,7 +149,7 @@ int run_project(const Options &options, const std::span<char *const> arguments) 
         request.list_inputs = options.print_inputs; // Added for --print-inputs.
         request.project_target = target.name;
         request.print_source = options.print_source;
-        request.print_abstr = options.print_abstr; // Added for parse transforms.
+        request.print_abstr = options.print_abstr;
         request.executable_output = target.output;
         request.create_output_directory = !options.output_explicit;
         request.entry = target.entry;

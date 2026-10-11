@@ -1,0 +1,6 @@
+{attribute,{1,1},file,{"crafted.erl",1}}.
+{attribute,{1,2},module,crafted}.
+{attribute,{2,2},export,[{main,1}]}.
+{attribute,[{generated,true},{location,{3,2}}],file,{"elsewhere.erl",100}}.
+{function,{101,1},main,1,[{clause,{101,1},[{var,{101,6},'_'}],[],[{match,[{generated,true},{location,{102,5}}],{var,{102,5},gen_var},{op,{102,15},'+',{integer,{102,13},40},{integer,{102,17},2}}},{call,{103,5},{remote,{103,7},{atom,{103,5},io},{atom,{103,8},format}},[{string,{103,15},"~p~ncrafted: ok~n"},{cons,{103,30},{var,{103,31},gen_var},{nil,{103,38}}}]}]}]}.
+{eof,{104,1}}.

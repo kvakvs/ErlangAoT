@@ -1,0 +1,6 @@
+{attribute,{1,1},file,{"bad.erl",1}}.
+{attribute,{1,2},module,bad}.
+{attribute,{2,2},export,[{f,x}]}.
+{function,{3,1},f,0,[{clause,{3,1},[],[],[{bogus,{4,5},x}]}]}.
+{function,{6,1},g,0,[{clause,{6,1},[],[],[{atom,oops,y}]}]}.
+{eof,{8,1}}.
