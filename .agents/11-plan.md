@@ -22,6 +22,9 @@ draft with smaller, single-commit steps.
   omission. An omitted item is never checked as implemented.
 - Phase C (steps 8A–8I) was inserted on 2026-10-04 after phase B closed; its
   steps run before step 9 and keep their letter IDs in commit titles.
+- Phase N2 (steps 73A–73H) was inserted on 2026-10-11 (user direction). It
+  selects and implements the parse-transform slice of step 73 and depends on
+  [65C](#step-65c), not on step 73, so it may run before steps 66–72.
 
 ## Common gate and rules (apply to every step)
 
@@ -124,6 +127,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 | L. Optimization and tooling | [58A](#step-58a)–[58N3](#step-58n3), [59](#step-59)–[62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70), [65A](#step-65a), [65B](#step-65b), [65C](#step-65c) | V01–V04, D03 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
+| N2. Parse transforms | [73A](#step-73a)–[73H](#step-73h) | D03 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
 
 ---
@@ -519,9 +523,10 @@ Backlog: D02. Depends on: [54](#step-54). **Decision.**
 Backlog: D03. Depends on: [58](#step-58). **Decision.**
 
 - Success criteria
-  - [ ] Per-attribute decision (`compile` options, `parse_transform`,
-    `on_load`, parse transforms (accepted unapplied with a warning since
-    65C), others; `behaviour` is implemented by [65A](#step-65a),
+  - [ ] Per-attribute decision (`compile` options, `on_load`, others;
+    parse transforms are selected and implemented by phase N2,
+    [73A](#step-73a)–[73H](#step-73h), accepted unapplied with a warning
+    until then; `behaviour` is implemented by [65A](#step-65a),
     `module_info` and informational attributes by [65B](#step-65b), imports
     and compile hints by [65C](#step-65c));
     rejected ones keep diagnostics.
@@ -574,6 +579,299 @@ Backlog: D07. Depends on: [58](#step-58). **Decision.**
     packages, watch/cache, parallel builds); selected items get their own plan.
 - Tests
   - [ ] None beyond the gate unless selected.
+
+## N2. Parse transforms
+
+Added 2026-10-11 (user direction). Backlog: D03 (selected slice). Clause
+applies `{parse_transform, M}` the way `erlc` does, using Erlang/OTP on the
+host only to run the transform module:
+
+1. export the preprocessed and parsed module as OTP abstract format forms;
+2. run `M:parse_transform(Forms, Options)` through a project-owned loader
+   adapter on the host OTP;
+3. import the returned forms, replace the module's AST with them and continue
+   compilation (lint, semantic analysis, codegen) as if parsed from source.
+
+All new code lives in `compiler/src/transforms/` (reserved for D03 in
+`files.md`), tests in `tests/compiler/transforms/`, fixtures in
+`tests/fixtures/transforms/`; the rest of the compiler only calls the stage's
+entry point from the driver. Normal builds and tests stay OTP-free: format
+coverage uses OTP-generated goldens; tests that run a transform need host OTP
+and are labeled and skipped (recorded as a gap) without it.
+
+Facts from pinned `lib/compiler/src/compile.erl` (to be confirmed by 73A):
+transforms run as the first standard pass, after `epp` and before
+`erl_lint`. The list is `{parse_transform, M}` from the compile options, then
+from `-compile` attributes in form order; those options are removed from the
+forms before the first transform runs. Each `M` must be loadable
+(`code:ensure_loaded`) and export `parse_transform/2`, else
+`undefined parse transform 'M'`. It receives the forms and the compile
+options and returns `Forms`, `{warning, Forms, Warnings}` or
+`{error, Errors, Warnings}`; an exception becomes
+`error in parse transform 'M': ...`. An optional
+`parse_transform_info/0` returning `#{error_location => line}` (or the
+`error_location` option) strips columns from the forms before that transform
+runs and from the final forms. Forms are those of
+[the abstract format](https://www.erlang.org/doc/apps/erts/absform.html),
+including `{attribute, A, file, {File, Line}}` at include boundaries, `{error,
+E}`/`{warning, W}` forms from `epp`, and `{eof, Location}`. `erlc +to_abstr`
+writes the post-transform forms as `File.abstr` (one `~p.` term per form),
+and `compile:file(F, [from_abstr])` compiles such a file.
+
+<a id="step-73a"></a>
+
+### 73A. Decide the parse transform contract
+
+Backlog: D03. Depends on: [65C](#step-65c). **Decision.**
+
+Investigate OTP's transform pass, the data in and out of a transform module
+and the forms `epp` produces, and publish `docs/transforms.md`.
+
+- Success criteria
+  - [x] OTP behavior recorded from pinned sources (`compile.erl`
+    `transform_module`/`foldl_transform`/`maybe_strip_columns`, `epp`,
+    `erl_parse`) and observed under host OTP 29.1.1: transform order
+    (options, then `-compile` attributes; duplicates run twice), options
+    passed (external compile options only), return shapes, message format,
+    column stripping, `epp`'s `file` attributes and `eof`, and the OTP 29
+    forms `absform.md` omits (`native_record`, qualified and `#_` record
+    names, `zip`, map comprehensions).
+  - [x] Interchange: External Term Format files between `clau` and the
+    loader; `.abstr` consult text for `--print-abstr` output (stdout, one
+    form per line; replaces the proposed `--to-abstr` file output) and
+    `.abstr` inputs; one owned term model serves both.
+  - [x] Host OTP: `--erl PATH`, `PATH`, then `%ProgramFiles%\Erlang OTP`
+    (no project option: the host tool is per machine); OTP 29 required; the
+    loader source is embedded in `clau`, written to a fresh temporary
+    directory and compiled in memory by `erl` on each run; request/reply
+    files; loader output copied to `clau`'s stderr; 600 s limit; no host OTP
+    is an error naming the transform (replaces the 65C warning).
+  - [x] Transform module lookup: `.beam` files on `--transform-path` /
+    `transform_paths` first (the only way for dependency transforms), then
+    project sources compiled in memory by the loader on every run (no cache:
+    decided against for simplicity; precompiling avoids the cost), then
+    OTP's modules. `include_lib` of OTP headers resolves through the
+    existing `--app-dir` mapping.
+  - [x] Compile-failure risk: the loader reports the transform's compiler
+    messages plus the hint to precompile it and pass `--transform-path`.
+  - [x] Pipeline: after preprocessing and parsing, before `predefined`, lint
+    and semantic analysis; modules with preprocessor or parse errors never
+    reach transforms (a `docs/differences.md` row lands with 73F, when it
+    becomes observable). `--print-ast`/`--print-source`/`--print-abstr`
+    show the transformed module; checks do not run transforms.
+  - [x] Layout `compiler/src/transforms/` (+ `loader/`), tests
+    `tests/compiler/transforms/`, fixtures `tests/fixtures/transforms/`;
+    CLI `--parse-transform`, `--transform-path`, `--erl`, `--print-abstr`;
+    project `parse_transforms`, `transform_paths`; OTP-requiring tests carry
+    label `host_otp` and skip when CMake finds no `erl`. Step 73,
+    `features.md` and `01-todo.md` D03 updated.
+- Tests
+  - [x] None beyond the gate; observations are owned notes in
+    `docs/transforms.md`, not OTP copies.
+- Evidence (2026-10-11): `docs/transforms.md`; probes of OTP 29.1.1 `erlc`
+  with a printing transform. Documentation only, so no build or test gate
+  was run for this step.
+
+<a id="step-73b"></a>
+
+### 73B. Add the abstract term model and its codecs
+
+Backlog: D03. Depends on: [73A](#step-73a).
+
+An owned, compiler-side term value for abstract forms and transform options:
+atoms, integers (big), floats, lists (proper and improper), strings as lists,
+tuples, maps, binaries and bitstrings, as attribute values may hold any
+literal.
+
+- Success criteria
+  - [ ] `compiler/src/transforms/` term model with an External Term Format
+    encoder/decoder (the tags OTP 29 `term_to_binary` emits for these kinds,
+    including UTF-8 atoms and bignums) and a `.abstr` text writer and reader
+    (`file:consult` syntax; reuse the parser's literal-term grammar where it
+    fits).
+  - [ ] Malformed or unsupported input (pids, refs, funs, truncated data,
+    budget overruns) is a diagnostic, never a crash.
+- Tests
+  - [ ] Focused unit tests for codec invariants a source fixture cannot
+    reach: tag coverage, round trips, truncation, size budgets; ETF and text
+    samples generated once by OTP and stored as goldens.
+
+<a id="step-73c"></a>
+
+### 73C. Export modules as abstract forms
+
+Backlog: D03. Depends on: [73B](#step-73b).
+
+- Success criteria
+  - [ ] An AST-to-forms writer covers every form, attribute, record, type,
+    spec, clause, expression, pattern, guard, binary, map, comprehension,
+    `maybe` and native record construct the parser accepts, with `{Line,
+    Column}` annotations, `-file` attributes at include boundaries as `epp`
+    emits them, and `{eof, Location}`; predefined functions are not
+    exported.
+  - [ ] `clau --print-abstr` prints each module's forms like
+    `erlc +to_abstr` writes them and stops (no transforms yet, so it is the
+    parsed module).
+- Tests
+  - [ ] CLI goldens: `.abstr` files generated once by `erlc +to_abstr` for
+    fixtures covering the whole grammar (reuse parser corpus and
+    `programs` fixtures) compared exactly with Clause output; every
+    difference is fixed or recorded in `docs/differences.md`.
+
+<a id="step-73d"></a>
+
+### 73D. Import abstract forms into the AST
+
+Backlog: D03. Depends on: [73C](#step-73c).
+
+- Success criteria
+  - [ ] A forms-to-AST reader builds the owned AST through the existing
+    builder for every shape the writer emits and every shape OTP's
+    `erl_parse` can produce (forms a transform builds need not come from
+    source syntax). Annotations become source locations: line and optional
+    column, the file from preceding `-file` attributes, `generated`.
+  - [ ] Invalid forms are diagnosed at their annotation, with `erl_lint`
+    wording where OTP reports the same problem; unsupported shapes are
+    explicit diagnostics.
+  - [ ] `.abstr` files are accepted as compiler inputs, positional and in
+    projects, like `erlc File.abstr`, and compile through the normal lint,
+    semantic and codegen stages.
+- Tests
+  - [ ] Round trip: export, import, export gives identical forms for every
+    73C fixture.
+  - [ ] Executable goldens: OTP-generated `.abstr` fixtures (including forms
+    no source can spell, e.g. `generated` annotations or a `-file` that
+    moves locations) compile, link and print the same stdout as their
+    `.erl` originals; diagnostics for invalid forms.
+
+<a id="step-73e"></a>
+
+### 73E. Run transforms through the host OTP loader
+
+Backlog: D03. Depends on: [73B](#step-73b).
+
+- Success criteria
+  - [ ] Host OTP discovery and release check as decided in 73A
+    (`transforms/host_otp`), reusing the subprocess launching of
+    `compiler/src/linking/`.
+  - [ ] An owned loader module (`compiler/src/transforms/loader/*.erl`,
+    erlfmt-formatted, embedded in `clau`) reads the request (forms, options,
+    ordered transform list, code paths), loads each transform, applies
+    `parse_transform_info/0` column stripping, runs `parse_transform/2` in
+    order and writes one result: forms plus warnings, errors plus warnings,
+    `undefined parse transform`, or the class, reason and stack of a crash.
+    Transform output on stdout/stderr reaches the user.
+  - [ ] Time limit, missing or broken host OTP, and a loader that exits
+    without a result are distinct diagnostics.
+- Tests
+  - [ ] OTP-requiring (labeled) loader tests through a CLI debug entry point
+    or 73F's pipeline: `erl_id_trans`, each return shape, crash, undefined
+    module, line-only `parse_transform_info/0`.
+  - [ ] OTP-free: the no-host-OTP diagnostic.
+
+<a id="step-73f"></a>
+
+### 73F. Apply parse transforms in the compile pipeline
+
+Backlog: D03. Depends on: [73D](#step-73d), [73E](#step-73e).
+
+- Success criteria
+  - [ ] The driver collects transforms in OTP order (options, then
+    `-compile` attributes), removes their options from the forms, exports,
+    runs the loader once per module, imports the result and replaces the
+    module's AST; predefined functions, lint and semantic analysis run on
+    the transformed module. Modules without transforms are unchanged and
+    never start OTP.
+  - [ ] Returned warnings and errors become Clause diagnostics at their
+    file and location, with OTP's `compile` wording for
+    `undefined parse transform 'M'` and `error in parse transform 'M': ...`;
+    `nowarn_*` and the 65C warning rules apply; the 65C `notimpl` warning is
+    removed.
+  - [ ] `--print-abstr` now prints the post-transform forms, as `erlc +to_abstr` writes them.
+  - [ ] Positional and project drivers both apply transforms.
+  - [ ] User docs (`docs/transforms.md`, `docs/compile.md`, README) state
+    how to invoke a transform, the host OTP requirement and how `clau`
+    finds it.
+- Tests
+  - [ ] OTP-requiring executable goldens: a module using `erl_id_trans`, and
+    `ets:fun2ms`/`dbg:fun2ms` through `ms_transform.hrl` printing the
+    produced match specification; stdout matches OTP.
+  - [ ] Lint goldens for transform-reported errors and warnings.
+
+<a id="step-73g"></a>
+
+### 73G. Use precompiled and project transform modules
+
+Backlog: D03. Depends on: [73F](#step-73f).
+
+- Success criteria
+  - [ ] Precompiled transforms: code-path directories from the CLI option and
+    the project option reach the loader; a transform from a dependency
+    library, built by the user with the host OTP, is found there as a
+    `.beam`. A `.beam` of the wrong OTP major or one that fails to load is a
+    diagnostic naming the file.
+  - [ ] Project transforms: a transform module from the batch, a project
+    source path or `source_search_paths` without a precompiled `.beam` is
+    compiled in memory by the loader (with the project's include dirs and
+    defines, transform helper modules alongside) on every run, as 73A
+    decided (no cache). A precompiled `.beam` on a code path wins.
+  - [ ] A compile failure of a project transform reports the transform's own diagnostics against
+    its source plus the 73A hint to precompile it into a `.beam` and pass a
+    code path; the modules that use it are not compiled. A transform that is
+    also compiled by Clause as an ordinary module still is.
+  - [ ] Multiple transforms chain in order; a transform that depends on a
+    second project module (helper library) works.
+  - [ ] User docs (`docs/transforms.md`, `docs/projects.md`) explain the code
+    path options with an example, when a `.beam` must be precompiled
+    (dependency transforms always, project transforms that host `erlc`
+    cannot build) and how to precompile it with the host OTP.
+- Tests
+  - [ ] OTP-requiring project fixtures: an owned transform that adds a
+    function and rewrites calls, used by two modules (executable golden);
+    the same transform as a
+    prebuilt `.beam` in a dependency directory given as a code path; a
+    transform whose source host `erlc` cannot compile (error and hint
+    golden).
+  - [ ] OTP-free: a code path that does not exist and a transform found
+    nowhere are diagnosed without starting OTP where possible.
+
+<a id="step-73h"></a>
+
+### 73H. Close parse transforms
+
+Backlog: D03. Depends on: [73G](#step-73g).
+
+- Success criteria
+  - [ ] Real projects with parse transforms (for example a `lager`- or
+    `qlc`-style user) compile past the transform stage; result recorded,
+    not a gate.
+  - [ ] User documentation (a "Parse transforms" section in `README.md`
+    linking a user guide in `docs/transforms.md`, plus `docs/compile.md` and
+    `docs/projects.md`) explains:
+    - what is required: Erlang/OTP 29 installed on the host only for modules
+      that use transforms; how `clau` finds it (`--erl`, `PATH`, the
+      Windows default installation);
+    - how to invoke a transform: `-compile({parse_transform, M})` in source,
+      `include_lib` headers such as `ms_transform.hrl`, and the CLI and
+      project options equivalent to `erlc +'{parse_transform,M}'`;
+    - how to configure code paths for precompiled `.beam` files, on the CLI
+      and in the project file, with a worked example;
+    - when precompiling is required: always for transforms from dependency
+      libraries; for project transforms when host `erlc` cannot compile them
+      with project settings; how to precompile with the host OTP
+      (`erlc -o DIR ...`) and that the `.beam` must match the host OTP
+      major;
+    - the lookup order, the cost of compiling project transforms on every
+      run, and the
+      diagnostics a user can meet with their remedies.
+  - [ ] Every command and example in that documentation executed as written
+    with host OTP; the CLI `--help` text names the new options.
+  - [ ] `docs/transforms.md`, `docs/differences.md`, `features.md`,
+    `01-todo.md` D03, step 73, `00-finished.md`, `arch.md`, `files.md` and
+    `aimemory.md` describe exactly what is supported.
+- Tests
+  - [ ] Full-mode CTest and `check-quality-all`, once with host OTP and once
+    without (OTP-requiring tests skipped and reported).
 
 ## O. Final closure
 

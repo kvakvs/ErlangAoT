@@ -118,7 +118,8 @@ checked as implemented.
 - **D02 — Atom collection** ([72](11-plan.md#step-72)): bounded permanent
   storage versus collection.
 - **D03 — Behavior-changing attributes and transforms**
-  ([73](11-plan.md#step-73)): compile options, parse transforms, on-load;
+  ([73](11-plan.md#step-73)): compile options, on-load; parse transforms
+  selected for [73A–73H](11-plan.md#step-73a) through host Erlang/OTP;
   `-behaviour` implemented by [65A](11-plan.md#step-65a);
   `module_info/0,1` and informational attributes implemented by
   [65B](11-plan.md#step-65b); imports and compile hints implemented by
