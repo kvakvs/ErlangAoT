@@ -10,7 +10,7 @@ Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` 
 | --- | --- |
 | Compiler API / AST | `compiler/include/clause/compiler/`, `ast/` beneath it; `mangling`: compile-time Itanium/MSVC symbols for runtime services |
 | Runtime API | `runtime/include/clause/runtime/` |
-| Shared generated-code ABI | `abi/include/clause/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `frames`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `records`, `funs`, `messages`, `immediate_services`, `output`, `startup`, `features`, `feature_diagnostic` |
+| Shared generated-code ABI | `abi/include/clause/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `frames`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `records`, `funs`, `messages`, `immediate_services`, `output`, `startup`, `features`, `feature_diagnostic`; `external_term`: representation-independent External Term Format `Writer`/`Reader` shared by the compiler (parse transforms) and future runtime `term_to_binary`/`binary_to_term`/distribution |
 | Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
 | Sketches / proposals | `runtime/include/*.hpp` (also legacy forwarders), `runtime/include/unverified/`; production APIs go in the canonical tree |
 | New sources / tests | Register in owning `CMakeLists.txt`; behavior tests through CLI/native workflows, private tests for inaccessible invariants |
@@ -46,6 +46,7 @@ Keys in the last column are relative to the directory column.
 | `codegen/` | Atom slots / registration; startup module (`main` → `CLAUSE_main_v1`); guarded variants; what facts prove about representations (`proofs`: small ranges, tuple arity, list shape, element facts) and the inline reads/tests they allow (`lowering_proofs`, step 59) | `module_{atoms,registration}`, `startup`; `specialization*`, `integer_guards`, `proofs`, `lowering_proofs` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
+| `transforms/` | Parse transforms (docs/transforms.md, plan 73A–73G), library `clause_transforms`: owned term arena (`terms`), its adapter to the shared `abi/external_term.hpp` codec (`etf`), consult text of `.abstr` (`term_text`); all walks use explicit stacks | `terms`, `etf`, `term_text` |
 | `linking/` | Executable linking: staged link (`StagedExecutable`) and deferred publication, Clang discovery/run, runtime archive lookup and target check, library directory (`library_directory`) | `link`, `toolchain`, `runtime_library` |
 
 ## Runtime — R

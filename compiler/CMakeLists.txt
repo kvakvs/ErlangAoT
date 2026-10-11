@@ -29,6 +29,12 @@ clause_project_options(clause_frontend)
 target_include_directories(clause_frontend PUBLIC include PRIVATE src)
 target_link_libraries(clause_frontend PRIVATE clause_parser_dependency)
 
+# Added for parse transforms: abstract-format terms and their codecs, the host OTP loader and form import.
+add_library(clause_transforms STATIC src/transforms/terms.cpp src/transforms/etf.cpp src/transforms/term_text.cpp)
+clause_project_options(clause_transforms)
+target_include_directories(clause_transforms PRIVATE src)
+target_link_libraries(clause_transforms PUBLIC clause_frontend PRIVATE clause_multiprecision_dependency clause_abi)
+
 add_executable(clau src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
     src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/predefined.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp src/driver/environment.cpp)
 if(WIN32 AND MSVC)

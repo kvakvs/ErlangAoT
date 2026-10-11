@@ -684,17 +684,30 @@ tuples, maps, binaries and bitstrings, as attribute values may hold any
 literal.
 
 - Success criteria
-  - [ ] `compiler/src/transforms/` term model with an External Term Format
+  - [x] `compiler/src/transforms/` term model with an External Term Format
     encoder/decoder (the tags OTP 29 `term_to_binary` emits for these kinds,
     including UTF-8 atoms and bignums) and a `.abstr` text writer and reader
     (`file:consult` syntax; reuse the parser's literal-term grammar where it
     fits).
-  - [ ] Malformed or unsupported input (pids, refs, funs, truncated data,
+  - [x] Malformed or unsupported input (pids, refs, funs, truncated data,
     budget overruns) is a diagnostic, never a crash.
 - Tests
-  - [ ] Focused unit tests for codec invariants a source fixture cannot
+  - [x] Focused unit tests for codec invariants a source fixture cannot
     reach: tag coverage, round trips, truncation, size budgets; ETF and text
     samples generated once by OTP and stored as goldens.
+- Evidence (2026-10-11): `transforms_terms` decodes OTP 29.1.1's
+  `term_to_binary` of 50 samples and re-encodes them byte for byte, reads
+  OTP's `~tp` text of each, round-trips Clause's own text, rejects every
+  truncation and unsupported tags, and handles 200,000-deep nesting
+  (`tests/compiler/transforms/terms_oracle.escript` regenerates the samples).
+  User direction (2026-10-11): the format layer is shared, not
+  compiler-private: `abi/include/clause/abi/external_term.hpp` holds a
+  representation-independent `Writer` and pull `Reader` that the runtime's
+  `term_to_binary`/`binary_to_term` and distribution must reuse; the
+  compiler's `transforms/etf` only adapts its term arena to it.
+  Gate: fresh fast CTest 236/237, the one failure `codegen_resource_cli`
+  predating this step (commit 33481a7 raised the module limit to 16384, the
+  test still expects 1025 inputs to fail); check-quality clean.
 
 <a id="step-73c"></a>
 

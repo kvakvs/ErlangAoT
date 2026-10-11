@@ -81,7 +81,11 @@ Transforms run when a module is compiled and for `--print-ast`,
 
 - `clau` and the loader exchange External Term Format files
   (`term_to_binary`, version 131, uncompressed): exact floats, UTF-8 atoms,
-  big integers and no text parsing in Erlang. Clause's term model holds atoms,
+  big integers and no text parsing in Erlang. The format itself (tags,
+  layouts, bounds checks) lives once in `abi/include/clause/abi/external_term.hpp`,
+  independent of any term representation, so the runtime's future
+  `term_to_binary/1`, `binary_to_term/1` and distribution reuse it.
+  Clause's compiler term model holds atoms,
   integers, floats, proper and improper lists, tuples, maps and bitstrings;
   pids, ports, references and funs are rejected with a diagnostic.
 - `.abstr` text is the [`file:consult/1`](https://www.erlang.org/doc/apps/kernel/file.html#consult/1)

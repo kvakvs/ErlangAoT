@@ -546,3 +546,8 @@ Host and tool gotchas:
   library modules/BIFs (array, ordsets, math, io_lib, atom_to_binary/2, fun_info/2, get_module_info/2).
 - 2026-10-10 user: --entry may name FUNCTION/0 (startup_no_arguments flag), commit fe55f8b.
 - 2026-10-10 user: source_search_paths take */** patterns (project::pattern_directories, shared with include_dirs) and are searched for Module.erl of modules the target names but does not list, before the library (frontend add_referenced). codegen_placeholders: warning-only features publish into a separate artifact dir; output dir is wiped first so reruns pass.
+- 73A-73G parse transforms (2026-10-11, docs/transforms.md): user direction: External Term Format code is shared
+  (abi/include/clause/abi/external_term.hpp Writer/Reader), never reimplemented by runtime term_to_binary/
+  binary_to_term/distribution. Pre-existing failure: codegen_resource_cli (user commit 33481a7 raised the module
+  limit to 16384, test still uses 1025 inputs). Terms arena: node() references die on any later add (copy children).
+  Gate scripts build/plan11-73/*.cmd.

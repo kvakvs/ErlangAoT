@@ -329,6 +329,9 @@ add_subdirectory(compiler/inference)
 
 add_subdirectory(compiler/lint)
 
+# Added for parse transforms.
+add_subdirectory(compiler/transforms)
+
 # Symbol round trips have no observable emitted-object replacement until lowering exists.
 add_executable(semantic_symbols compiler/semantic/symbols.cpp)
 clause_project_options(semantic_symbols)
