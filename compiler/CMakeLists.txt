@@ -30,7 +30,9 @@ target_include_directories(clause_frontend PUBLIC include PRIVATE src)
 target_link_libraries(clause_frontend PRIVATE clause_parser_dependency)
 
 # Added for parse transforms: abstract-format terms and their codecs, the host OTP loader and form import.
-add_library(clause_transforms STATIC src/transforms/terms.cpp src/transforms/etf.cpp src/transforms/term_text.cpp)
+add_library(clause_transforms STATIC src/transforms/terms.cpp src/transforms/etf.cpp src/transforms/term_text.cpp
+    src/transforms/export.cpp src/transforms/export_expressions.cpp src/transforms/export_control.cpp
+    src/transforms/export_forms.cpp src/transforms/export_types.cpp)
 clause_project_options(clause_transforms)
 target_include_directories(clause_transforms PRIVATE src)
 target_link_libraries(clause_transforms PUBLIC clause_frontend PRIVATE clause_multiprecision_dependency clause_abi)
@@ -47,7 +49,7 @@ set_target_properties(clau PROPERTIES
 )
 clause_project_options(clau)
 target_compile_definitions(clau PRIVATE CLAUSE_VERSION="${PROJECT_VERSION}")
-target_link_libraries(clau PRIVATE clause_abi)
+target_link_libraries(clau PRIVATE clause_abi clause_transforms)
 
 add_subdirectory(src/project)
 

@@ -276,6 +276,7 @@ clau [options] <source.erl>...
   --print-pp               Print expanded Erlang source
   --print-ast              Print an indented syntax tree
   --print-source           Print each module as Erlang source
+  --print-abstr            Print each module as OTP abstract format forms
   --print-inputs           List the batch's sources, including modules added by reference; do not compile
   --print-env              Print the resolved compile environment as TOML and exit
   --print-types            Print each module as source annotated with inferred types

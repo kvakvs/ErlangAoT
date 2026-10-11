@@ -93,6 +93,11 @@ Transforms run when a module is compiled and for `--print-ast`,
   module's forms after transforms in that syntax to stdout, one form per line;
   a `.abstr` input file compiles like `erlc File.abstr`. Clause writes
   canonical text, not OTP's `~p` layout; equal terms are what matter.
+  The forms equal `epp:parse_file(F, [{location, {1, 1}}])` for every
+  construct of `tests/fixtures/transforms/abstract/`, including `epp`'s
+  `file` attributes (an explicit `-file` is annotated
+  `[{generated, true}, {location, L}]`) and an `eof` counted from the last
+  `-file` of the main file.
 
 ## Host OTP
 

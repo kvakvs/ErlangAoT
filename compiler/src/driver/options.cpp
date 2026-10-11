@@ -104,6 +104,7 @@ bool parse_flag(const std::string_view argument, Options &options) {
                                                         {"--parse-check", {&Options::parse_check, true}},
                                                         {"--print-ast", {&Options::print_ast, true}},
                                                         {"--print-source", {&Options::print_source, true}},
+                                                        {"--print-abstr", {&Options::print_abstr, true}},
                                                         {"--print-inputs", {&Options::print_inputs, true}},
                                                         {"--print-env", {&Options::print_env, false}},
                                                         {"--verbose", {&Options::verbose, false}}};
@@ -142,7 +143,7 @@ static std::optional<std::string> parse_option(const std::string_view argument, 
 static std::optional<std::string> action_conflict(const Options &options) {
     if (options.preprocess && (options.output_explicit || options.entry)) {
         return "--output and --entry cannot be used with --preprocess-check, --parse-check, --print-pp, --print-ast, "
-               "--print-source, or --print-inputs";
+               "--print-source, --print-abstr, or --print-inputs";
     }
     if (options.print_env && options.project.create) {
         return "--print-env cannot be combined with --new-project";
@@ -187,6 +188,7 @@ std::optional<std::string> parse_options(std::span<char *> remaining, Options &o
         // Listing replaces the other check/print actions; the frontend parses without printing.
         // Added for --print-inputs.
         options.print_pp = options.print_ast = options.print_source = options.parse_check = false;
+        options.print_abstr = false; // Added for parse transforms.
     }
     return validate_options(options);
 }

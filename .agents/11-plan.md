@@ -716,20 +716,33 @@ literal.
 Backlog: D03. Depends on: [73B](#step-73b).
 
 - Success criteria
-  - [ ] An AST-to-forms writer covers every form, attribute, record, type,
+  - [x] An AST-to-forms writer covers every form, attribute, record, type,
     spec, clause, expression, pattern, guard, binary, map, comprehension,
     `maybe` and native record construct the parser accepts, with `{Line,
     Column}` annotations, `-file` attributes at include boundaries as `epp`
     emits them, and `{eof, Location}`; predefined functions are not
     exported.
-  - [ ] `clau --print-abstr` prints each module's forms like
+  - [x] `clau --print-abstr` prints each module's forms like
     `erlc +to_abstr` writes them and stops (no transforms yet, so it is the
     parsed module).
 - Tests
-  - [ ] CLI goldens: `.abstr` files generated once by `erlc +to_abstr` for
+  - [x] CLI goldens: `.abstr` files generated once by `erlc +to_abstr` for
     fixtures covering the whole grammar (reuse parser corpus and
     `programs` fixtures) compared exactly with Clause output; every
     difference is fixed or recorded in `docs/differences.md`.
+- Evidence (2026-10-11): `transforms_abstract` compares `clau --print-abstr`
+  with `epp:parse_file(F, [{location, {1, 1}}])` of OTP 29.1.1 for four
+  fixtures (attributes, includes, explicit `-file`, every expression,
+  pattern, control, comprehension and type form, sigils, native and
+  qualified records) as terms: all equal. Found and matched along the way:
+  `[]` is annotated at `[`, an explicit `-file` carries
+  `[{generated,true},{location,L}]`, `eof` counts from the last `-file`.
+  Include names are written relative to the working directory
+  (`docs/differences.md` row for files outside it). Golden generator:
+  `tests/compiler/transforms/abstract_oracle.escript`.
+  Gate: fresh fast CTest 236/238 (`codegen_resource_cli` predates the
+  step; `transforms_abstract` first missed its Python lookup, then passed
+  in a rerun of the transforms/CLI/printing tests); check-quality clean.
 
 <a id="step-73d"></a>
 

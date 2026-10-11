@@ -8,6 +8,7 @@
 #include "escript.hpp"
 #include "options.hpp"
 #include "predefined.hpp"
+#include "transforms/export.hpp"
 #include <algorithm>
 #include <clause/compiler/parser.hpp>
 #include <clause/compiler/printing.hpp>
@@ -60,13 +61,17 @@ void print_form(const PreprocessorEvent &event) {
 // Own syntax for the entire batch before borrowing it in semantic side tables.
 using Inputs = std::vector<codegen::CompilationInput>;
 
-// Print a parsed module as the request asks: as a syntax tree, as source, or both.
-void print_parsed(const FrontendRequest &request, const ast::Module &module) {
+// Print a parsed module as the request asks: as a syntax tree, as source, as abstract forms of the main source.
+void print_parsed(const FrontendRequest &request, const ast::Module &module, const Source &main) {
     if (request.print_ast) {
         print_ast(std::cout, module);
     }
     if (request.print_source) {
         print_source(std::cout, module);
+    }
+    if (request.print_abstr) {
+        // Added for parse transforms.
+        std::cout << transforms::abstract_text(transforms::export_module(module, module.forms(), main));
     }
 }
 
@@ -87,7 +92,7 @@ void parse_events(PreprocessorSession &session, const FrontendRequest &request, 
 // Consume a parsing pass and dispatch successful modules to the requested final stage; compiled modules get OTP's
 // predefined functions.
 bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
-                     const std::filesystem::path &path, const bool escript, Inputs &inputs) {
+                     const SourcePtr &source, const std::filesystem::path &path, const bool escript, Inputs &inputs) {
     ParserSession parser;
     parse_events(session, request, parser);
     const auto predefined = request.compile && !parser.stopped()
@@ -97,7 +102,7 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
     for (const auto &diagnostic : result.diagnostics) {
         print_diagnostic(diagnostic, sink);
     }
-    print_parsed(request, result.module);
+    print_parsed(request, result.module, *source);
     if (result.failed || session.failed()) {
         return true;
     }
@@ -134,9 +139,9 @@ bool process_module(const std::filesystem::path &path, const FrontendRequest &re
     const auto source = read_source(sources, path, sink, escript);
     trace_ingestion(request.verbose, "pp", path);
     PreprocessorSession session(source, preprocessing_options(request));
-    if (request.parse_check || request.print_ast || request.print_source || request.compile) {
+    if (request.parse_check || request.print_ast || request.print_source || request.print_abstr || request.compile) {
         trace_ingestion(request.verbose, "parse", path);
-        return parse_and_print(session, request, sink, path, escript, inputs);
+        return parse_and_print(session, request, sink, source, path, escript, inputs);
     }
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<Diagnostic>(&*event)) {
@@ -286,6 +291,7 @@ int process_inputs(const Options &options) {
         options.verbose,  options.preprocessing, options.backend};
     request.list_inputs = options.print_inputs; // Added for --print-inputs.
     request.print_source = options.print_source;
+    request.print_abstr = options.print_abstr; // Added for parse transforms.
     if (options.output_explicit) {
         request.executable_output = options.output;
     }

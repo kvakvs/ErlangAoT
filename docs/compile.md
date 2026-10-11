@@ -91,6 +91,13 @@ Other actions on the same sources:
 & $tool -O2 --no-type-specialization --verbose examples/compile/answer.erl examples/compile/client.erl
 ```
 
+## Abstract format printing
+
+`--print-abstr` (a frontend action) prints each parsed module as the OTP
+[abstract format](https://www.erlang.org/doc/apps/erts/absform.html) forms
+`epp` would hand a parse transform, one `file:consult/1` term per line, the
+same terms `erlc +to_abstr` writes ([transforms](transforms.md)).
+
 ## Source printing
 
 `--print-source` (a frontend action, like `--print-ast`) prints each parsed
@@ -190,7 +197,7 @@ artifact_dir = "/work/build/aot"
 ```
 
 (Arrays print one item per line.) `actions` lists the frontend actions
-(`print-pp`, `parse-check`, `print-ast`, `print-source`, else
+(`print-pp`, `parse-check`, `print-ast`, `print-source`, `print-abstr`, else
 `preprocess-check`; `print-inputs` alone replaces them), else the inspections
 (`print-types`, `print-ir`, `print-optimized-ir`), else `emit`, `link` (`-o`) or
 `compile`. In a project build, targets with an `output` link too. Modules found

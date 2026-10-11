@@ -1,0 +1,2 @@
+-define(VALUE, {included, 42}).
+-record(inc, {f = ?VALUE}).

@@ -34,6 +34,8 @@ struct Options {
     bool print_ast = false;
     // Parse the expanded token stream and emit it as Erlang source (docs/compile.md#source-printing).
     bool print_source = false;
+    // Parse and print each module as OTP abstract format forms (docs/transforms.md). Added for parse transforms.
+    bool print_abstr = false;
     // Print the resolved compile environment as TOML instead of running the validated command.
     bool print_env = false;
     // Parse inputs and add referenced modules, then list the batch instead of compiling; replaces other actions.

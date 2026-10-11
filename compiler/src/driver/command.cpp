@@ -33,6 +33,7 @@ Options:
       --print-pp         Print preprocessed Erlang source to stdout.
       --print-ast        Parse and print an indented syntax tree to stdout.
       --print-source     Parse and print each module as Erlang source to stdout.
+      --print-abstr      Parse and print each module as OTP abstract format forms (erlc +to_abstr) to stdout.
       --print-inputs     Parse the inputs, add the modules they name, print every source of the batch; do not compile.
       --print-env        Print the resolved compile environment as TOML and exit without processing sources.
   -I, --include <dir>  Add an include directory (last supplied is searched first).

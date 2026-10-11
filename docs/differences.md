@@ -100,3 +100,8 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | Negative precision or pad count (`~.*c` with -1) | Loops forever | `badarg` | [io](io.md#formats) |
 | `io` functions other than `format/1,2`, `put_chars/1` | Exist | `unknown module io` | [io](io.md#calls) |
 
+## Parse transforms
+
+| Difference | OTP | Clause | Owner |
+| --- | --- | --- | --- |
+| Name in the `file` attribute of an included file (`--print-abstr`, transform input) | The include directory joined to the name, as found (`inc.hrl`, `/abs/dir/inc.hrl`, `../inc/x.hrl`) | The path relative to the working directory when the file is under it, else the absolute path | [transforms](transforms.md#interchange) |

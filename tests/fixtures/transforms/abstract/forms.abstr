@@ -1,0 +1,108 @@
+{attribute,{1,1},file,{"forms.erl",1}}.
+{attribute,{1,2},module,forms}.
+{attribute,{2,2},moduledoc,"Module documentation."}.
+{attribute,{3,2},export,[{f,1},{g,0},{h,0}]}.
+{attribute,{4,2},export_type,[{t,0},{p,1}]}.
+{attribute,{5,2},import,{lists,[{map,2},{foldl,3}]}}.
+{attribute,{6,2},compile,[nowarn_unused_vars]}.
+{attribute,{7,2},compile,{inline,[{g,0}]}}.
+{attribute,{8,2},behaviour,gen_server}.
+{attribute,{9,2},vsn,"1.0"}.
+{attribute,{10,2},my_attr,{tuple,[1,2.5,"str",<<1,2>>],#{key => value},-3}}.
+{attribute,{1,1},file,{"forms.hrl",1}}.
+{attribute,{2,2},
+           record,
+           {inc,[{record_field,{2,15},
+                               {atom,{2,15},f},
+                               {tuple,{2,20},
+                                      [{atom,{2,20},included},
+                                       {integer,{2,20},42}]}}]}}.
+{attribute,{13,1},file,{"forms.erl",13}}.
+{attribute,
+    {14,2},
+    record,
+    {rec,
+        [{typed_record_field,
+             {record_field,{14,15},{atom,{14,15},a},{integer,{14,19},1}},
+             {type,{14,24},integer,[]}},
+         {record_field,{14,35},{atom,{14,35},b}},
+         {typed_record_field,
+             {record_field,{14,38},{atom,{14,38},c}},
+             {type,
+                 {14,43},
+                 union,
+                 [{type,{14,43},atom,[]},{atom,{14,52},undefined}]}}]}}.
+{attribute,
+    {15,2},
+    native_record,
+    {native,
+        [{record_field,{15,17},{atom,{15,17},x},{integer,{15,21},0}},
+         {typed_record_field,
+             {record_field,{15,24},{atom,{15,24},y}},
+             {type,{15,29},binary,[]}}]}}.
+{attribute,{17,2},
+           type,
+           {t,{type,{17,14},
+                    union,
+                    [{type,{17,14},integer,[]},{type,{17,26},atom,[]}]},
+              []}}.
+{attribute,{18,2},
+           type,
+           {p,{type,{18,15},
+                    union,
+                    [{type,{18,15},list,[{var,{18,16},'T'}]},
+                     {type,{18,21},
+                           tuple,
+                           [{var,{18,22},'T'},{var,{18,25},'T'}]}]},
+              [{var,{18,9},'T'}]}}.
+{attribute,{19,2},
+           opaque,
+           {o,{type,{19,16},
+                    map,
+                    [{type,{19,25},
+                           map_field_assoc,
+                           [{type,{19,18},atom,[]},{type,{19,28},term,[]}]}]},
+              []}}.
+{attribute,{20,2},nominal,{n,{type,{20,17},non_neg_integer,[]},[]}}.
+{attribute,{22,2},
+           callback,
+           {{init,1},
+            [{type,{22,15},
+                   'fun',
+                   [{type,{22,15},product,[{type,{22,16},term,[]}]},
+                    {type,{22,27},
+                          tuple,
+                          [{atom,{22,28},ok},{type,{22,32},term,[]}]}]}]}}.
+{attribute,{24,2},
+           spec,
+           {{f,1},
+            [{type,{24,8},
+                   bounded_fun,
+                   [{type,{24,8},
+                          'fun',
+                          [{type,{24,8},product,[{var,{24,9},'T'}]},
+                           {var,{24,15},'T'}]},
+                    [{type,{24,22},
+                           constraint,
+                           [{atom,{24,22},is_subtype},
+                            [{var,{24,22},'T'},
+                             {type,{24,27},integer,[]}]]}]]}]}}.
+{attribute,{25,2},doc,"Function documentation."}.
+{function,{26,1},
+          f,1,
+          [{clause,{26,1},[{var,{26,3},'X'}],[],[{var,{27,5},'X'}]}]}.
+{attribute,{29,2},
+           spec,
+           {{g,0},
+            [{type,{29,8},
+                   'fun',
+                   [{type,{29,8},product,[]},{atom,{29,14},ok}]}]}}.
+{function,{30,1},g,0,[{clause,{30,1},[],[],[{atom,{31,5},ok}]}]}.
+{attribute,[{generated,true},{location,{33,2}}],file,{"other.erl",100}}.
+{function,{101,1},
+          h,0,
+          [{clause,{101,1},
+                   [],[],
+                   [{tuple,{102,6},
+                           [{atom,{102,6},included},{integer,{102,6},42}]}]}]}.
+{eof,{103,1}}.
