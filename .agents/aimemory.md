@@ -551,3 +551,7 @@ Host and tool gotchas:
   binary_to_term/distribution. Pre-existing failure: codegen_resource_cli (user commit 33481a7 raised the module
   limit to 16384, test still uses 1025 inputs). Terms arena: node() references die on any later add (copy children).
   Gate scripts build/plan11-73/*.cmd.
+  73F-73G: Windows re-sets ProgramFiles for every child process (env cannot hide an installed OTP): tests use
+  --erl none. erlc -pa . does not find modules; pass absolute -pa (loader makes code paths absolute). Bash
+  heredocs still collapse backslashes in python edits: write edit scripts with Write (scratchpad apply*.py).
+  User AGENTS.md edit (2026-10-11, uncommitted): no feature tags on trivial one-line changes.

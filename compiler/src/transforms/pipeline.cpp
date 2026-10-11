@@ -126,6 +126,33 @@ void report(const TransformReply &reply, TransformOutcome &outcome, SourceManage
     }
 }
 
+// Whether a code path directory holds Module.beam, which wins over the project's source of the module.
+bool precompiled(const std::u32string &name, const std::vector<std::filesystem::path> &directories) {
+    const auto bytes = utf8(name) + ".beam";
+    const std::filesystem::path file(std::u8string(bytes.begin(), bytes.end()));
+    return std::ranges::any_of(directories, [&](const auto &directory) {
+        std::error_code error;
+        return std::filesystem::is_regular_file(directory / file, error);
+    });
+}
+
+// Code path directories that do not exist, reported before any host code runs.
+bool missing_paths(const TransformSettings &settings, const std::string &file, TransformOutcome &outcome,
+                   SourceManager &sources) {
+    for (const auto &directory : settings.code_paths_) {
+        std::error_code error;
+        if (!std::filesystem::is_directory(directory, error)) {
+            const auto bytes = directory.generic_u8string();
+            outcome.diagnostics_.push_back(
+                located(file, std::nullopt,
+                        "parse transform path is not a directory: " + std::string(bytes.begin(), bytes.end()),
+                        Severity::error, sources));
+            outcome.failed_ = true;
+        }
+    }
+    return outcome.failed_;
+}
+
 // The request for one module: its transforms, project sources of those that have one, the host erl.
 TransformRequest request_for(const std::filesystem::path &erl, std::vector<std::u32string> transforms,
                              const TransformSettings &settings, const CompileOptions &options, std::string file) {
@@ -139,9 +166,15 @@ TransformRequest request_for(const std::filesystem::path &erl, std::vector<std::
     source_options.features_.clear();
     source_options.transforms_.clear();
     for (const auto &name : transforms) {
-        const auto source = settings.find_source_ ? settings.find_source_(name) : std::nullopt;
-        if (source) {
-            request.sources_.push_back({.path_ = *source, .options_ = source_options});
+        if (precompiled(name, settings.code_paths_) || !settings.find_sources_) {
+            continue;
+        }
+        for (auto &path : settings.find_sources_(name)) {
+            const auto known =
+                std::ranges::any_of(request.sources_, [&](const auto &item) { return item.path_ == path; });
+            if (!known) {
+                request.sources_.push_back({.path_ = std::move(path), .options_ = source_options});
+            }
         }
     }
     request.transforms_ = std::move(transforms);
@@ -194,6 +227,9 @@ TransformOutcome transform_module(const ast::Module &syntax, const Source &main,
     auto module = export_module(syntax, syntax.forms(), outcome.end_);
     auto transforms = transform_names(module, settings);
     remove_transform_options(module);
+    if (missing_paths(settings, main.name, outcome, sources)) {
+        return outcome;
+    }
     const auto erl = host_erl(settings, transforms.front(), main.name, outcome, sources);
     if (!erl) {
         return outcome;

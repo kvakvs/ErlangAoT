@@ -871,35 +871,52 @@ Backlog: D03. Depends on: [73D](#step-73d), [73E](#step-73e).
 Backlog: D03. Depends on: [73F](#step-73f).
 
 - Success criteria
-  - [ ] Precompiled transforms: code-path directories from the CLI option and
+  - [x] Precompiled transforms: code-path directories from the CLI option and
     the project option reach the loader; a transform from a dependency
     library, built by the user with the host OTP, is found there as a
     `.beam`. A `.beam` of the wrong OTP major or one that fails to load is a
     diagnostic naming the file.
-  - [ ] Project transforms: a transform module from the batch, a project
+  - [x] Project transforms: a transform module from the batch, a project
     source path or `source_search_paths` without a precompiled `.beam` is
     compiled in memory by the loader (with the project's include dirs and
     defines, transform helper modules alongside) on every run, as 73A
     decided (no cache). A precompiled `.beam` on a code path wins.
-  - [ ] A compile failure of a project transform reports the transform's own diagnostics against
+  - [x] A compile failure of a project transform reports the transform's own diagnostics against
     its source plus the 73A hint to precompile it into a `.beam` and pass a
     code path; the modules that use it are not compiled. A transform that is
     also compiled by Clause as an ordinary module still is.
-  - [ ] Multiple transforms chain in order; a transform that depends on a
+  - [x] Multiple transforms chain in order; a transform that depends on a
     second project module (helper library) works.
-  - [ ] User docs (`docs/transforms.md`, `docs/projects.md`) explain the code
+  - [x] User docs (`docs/transforms.md`, `docs/projects.md`) explain the code
     path options with an example, when a `.beam` must be precompiled
     (dependency transforms always, project transforms that host `erlc`
     cannot build) and how to precompile it with the host OTP.
 - Tests
-  - [ ] OTP-requiring project fixtures: an owned transform that adds a
+  - [x] OTP-requiring project fixtures: an owned transform that adds a
     function and rewrites calls, used by two modules (executable golden);
     the same transform as a
     prebuilt `.beam` in a dependency directory given as a code path; a
     transform whose source host `erlc` cannot compile (error and hint
     golden).
-  - [ ] OTP-free: a code path that does not exist and a transform found
+  - [x] OTP-free: a code path that does not exist and a transform found
     nowhere are diagnosed without starting OTP where possible.
+- Evidence (2026-10-11): `transforms_project` (label `host_otp`) builds a
+  project whose own transform (`transforms/pt_rewrite.erl`, rewriting
+  calls and adding a function through the helper module `pt_helper`) is
+  found via `source_search_paths` and compiled by the loader, and whose
+  dependency transform `pt_dep` is precompiled with `erlc` into
+  `deps/ptdep/ebin` and found via `transform_paths = ["deps/*/ebin"]` and
+  `parse_transforms`; both modules of the program are transformed and print
+  OTP 29.1.1's output. A transform source that does not compile fails with
+  its compiler message and the precompile hint; a precompiled `.beam` of the
+  same module then wins over the broken source. `transforms_pipeline` adds a
+  corrupt `.beam` (`cannot load parse transform 'pt_corrupt' from ...`);
+  `transforms_no_otp` adds a missing transform path, reported without
+  starting OTP. A transform found nowhere is only known to OTP, so it stays
+  `undefined parse transform` from the loader.
+  Gate: fresh fast CTest 242/243 (only the earlier `codegen_resource_cli`
+  failure; all seven `transforms_*` tests ran, the OTP ones on the host OTP);
+  one tidy finding fixed, then check-quality clean.
 
 <a id="step-73h"></a>
 

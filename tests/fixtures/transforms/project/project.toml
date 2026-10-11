@@ -1,0 +1,11 @@
+schema_version = 1
+
+[[targets]]
+name = "app"
+sources = ["src/*.erl"]
+output = "app.exe"
+
+[targets.options]
+source_search_paths = ["transforms"]
+parse_transforms = ["pt_dep"]
+transform_paths = ["deps/*/ebin"]

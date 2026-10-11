@@ -37,6 +37,9 @@ my_dependency = "vendor/my_dependency"
   Explicit files must end in `.erl`, or `.abstr` for abstract format forms
   ([transforms](transforms.md#interchange)); headers are dependencies, not
   inputs.
+- `parse_transforms` (module names) and `transform_paths` (directories or
+  patterns of precompiled `.beam` files) in `options` apply parse transforms to
+  the target's modules ([transforms](transforms.md#options)).
 - `options` fields are optional typed frontend options. `defines` use
   `NAME` (= `true`) or `NAME=ERLANG_LITERAL_TERM`; duplicates are errors. A
   feature cannot appear in both feature lists.

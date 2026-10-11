@@ -11,10 +11,16 @@
   or for every module of the command with `--parse-transform Module`
   (repeatable; these run first, like `erlc +'{parse_transform,M}'`).
 - **Transform modules** are found as `.beam` files in `--transform-path`
-  directories (repeatable), then among OTP's modules (`ms_transform`, `qlc`).
-  A transform from another library must be compiled with the host OTP first,
-  for example `erlc -o deps/lib/ebin deps/lib/src/*.erl`, and its `ebin`
-  directory passed with `--transform-path`.
+  directories (repeatable) and the project's `transform_paths`, then as
+  `Module.erl` among the batch's sources and `source_search_paths` (compiled
+  by the host OTP on every build, with the modules they call from there),
+  then among OTP's modules (`ms_transform`, `qlc`).
+- **Precompile** a transform that comes from another library (always), or a
+  project transform the host compiler cannot build with the target's include
+  directories and defines: `erlc -o deps/lib/ebin deps/lib/src/*.erl` with
+  the host OTP, then name `deps/lib/ebin` with `--transform-path` or in
+  `transform_paths`. The `.beam` must come from the host's OTP release; a
+  `.beam` there wins over a source of the same module.
 - **What runs it:** compiling, `--print-ast`, `--print-source` and
   `--print-abstr` (which shows the transformed forms); `--parse-check`,
   `--preprocess-check` and `--print-pp` do not.
@@ -146,8 +152,9 @@ gives the same forms.
 - The host must run OTP 29 (`erlang:system_info(otp_release)`); another
   release is an error.
 - The [loader](#loader) runs as `erl -noshell -noinput -pa Dir ... -eval ...`
-  (code path directories made absolute) with a time limit of 600 s. Its stdout and stderr (including the
-  transform's `io:format` output) are copied to `clau`'s stderr after it ends.
+  (code path directories made absolute) with a time limit of 600 s. Its
+  stdout and stderr (including the transform's `io:format` output) are copied
+  to `clau`'s stderr after it ends.
   A loader that exits without writing a reply, times out or cannot start is
   an error.
 - A transform executes arbitrary code with the user's rights, exactly as it
@@ -179,12 +186,14 @@ A transform module is looked up in this order:
    first (for example `erlc -o deps/lib/ebin deps/lib/src/*.erl`); Clause
    never builds dependencies. The `.beam` must come from the host's OTP major
    release.
-2. **The current project's sources**: a `Module.erl` in the batch, the
-   project's sources or its `source_search_paths`, compiled by the loader in
-   memory with the project's include directories and defines, on every run.
-   There is no cache; precompile a large transform to save that time.
+2. **The current project's sources**: a `Module.erl` in the batch or its
+   `source_search_paths`, compiled by the loader in memory with the target's
+   include directories and defines on every run, together with the project
+   modules it calls by name (found the same way). There is no cache;
+   precompile a large transform to save that time.
 3. **OTP's own modules** (`ms_transform`, `qlc`) from the host's code path.
-   OTP ships `erl_id_trans` only as an example source, not as a module. Their headers resolve as every `include_lib` does
+   OTP ships `erl_id_trans` only as an example source, not as a module.
+   Their headers resolve as every `include_lib` does
    ([preprocessor](preprocessor.md#compatibility-policies)): map the
    application, as in
    `--app-dir "stdlib=C:/Program Files/Erlang OTP/lib/stdlib-8.1"` for
@@ -212,14 +221,33 @@ library modules Clause does not ship, so keep transforms out of a target's
 | Transform raised | `File: error in parse transform 'M': ...` (OTP's text) |
 | Transform warning or error | `File:Line:Column: Text` as returned |
 | Transform source does not compile | its messages, then the precompile hint |
+| A transform path does not exist | `File: parse transform path is not a directory: DIR` |
+| A `.beam` on a transform path does not load | `File: cannot load parse transform 'M' from PATH: Reason` |
 | Loader failed, timed out or wrote no reply | `parse transform loader failed: ...` |
 | Invalid returned forms | the parser's diagnostic at the form's location |
 
 ## Options
 
-| CLI | Project (`[options]`) | Meaning |
+| CLI | Project (`[targets.options]`) | Meaning |
 | --- | --- | --- |
-| `--parse-transform M` | `parse_transforms = ["m"]` | Apply `M` to every module, before its own `-compile` transforms |
-| `--transform-path DIR` | `transform_paths = ["dir"]` | Code path for precompiled transform `.beam` files |
-| `--erl PATH` | — | Host `erl` executable |
+| `--parse-transform M` | `parse_transforms = ["m"]` | Apply `M` to every module, before its own `-compile` transforms (CLI ones first) |
+| `--transform-path DIR` | `transform_paths = ["deps/*/ebin"]` | Code path for precompiled transform `.beam` files; patterns as in `source_search_paths` |
+| `--erl PATH` or `none` | — | Host `erl` executable; `none` never runs host code |
 | `--print-abstr` | — | Print the forms after transforms instead of compiling |
+
+A project that uses its own transform and a precompiled one from a dependency:
+
+```toml
+[[targets]]
+name = "app"
+sources = ["src/*.erl"]
+
+[targets.options]
+source_search_paths = ["transforms"]  # transforms/pt_rewrite.erl, compiled for each build
+parse_transforms = ["pt_dep"]         # applied to every module of the target
+transform_paths = ["deps/*/ebin"]     # deps/ptdep/ebin/pt_dep.beam, built with erlc first
+```
+
+Keep transform modules out of a target's `sources` when the program does not
+call them: as ordinary modules they would be compiled by Clause too, and their
+calls into `erl_parse` or `erl_syntax` need modules Clause does not ship.

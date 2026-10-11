@@ -1,0 +1,82 @@
+"""Transform modules from a project (added for parse transforms).
+
+project.py CLAU ERL FIXTURES WORK: a project whose transform and its helper are project sources found through
+source_search_paths, plus a dependency transform precompiled with the host OTP and found through transform_paths,
+links a program that prints what OTP prints; a transform source the loader cannot compile is reported with the
+precompile hint; a precompiled .beam on a code path wins over the source.
+"""
+import pathlib
+import shutil
+import subprocess
+import sys
+
+
+def run(command, cwd):
+    """Run a command, capturing text output."""
+    return subprocess.run([str(part) for part in command], cwd=cwd, capture_output=True, text=True,
+                          encoding="utf-8", timeout=600, check=False)
+
+
+def prepare(erl, fixtures, work):
+    """A fresh copy of the project with its dependency transform built by the host OTP."""
+    root = work / "project"
+    shutil.rmtree(root, ignore_errors=True)
+    shutil.copytree(fixtures / "project", root)
+    ebin = root / "deps/ptdep/ebin"
+    ebin.mkdir(parents=True)
+    erlc = pathlib.Path(erl).with_name("erlc" + pathlib.Path(erl).suffix)
+    built = run([erlc, "-o", ebin, root / "deps/ptdep/src/pt_dep.erl"], root)
+    return root, ([] if built.returncode == 0 else [f"erlc failed\n{built.stdout}{built.stderr}"])
+
+
+def program(tool, erl, root):
+    """Build the project and compare the program's output with OTP's."""
+    built = run([tool, "--erl", erl, "--project", "project.toml"], root)
+    if built.returncode != 0:
+        return [f"project: build failed\n{built.stderr}"]
+    result = run([root / "app.exe"], root)
+    expected = (root / "app.stdout").read_text(encoding="utf-8")
+    stdout = result.stdout.replace("\r\n", "\n")
+    return [] if result.returncode == 0 and stdout == expected else [f"project: exit {result.returncode}\n{stdout}"]
+
+
+def broken(tool, erl, root):
+    """A transform source that does not compile fails the modules using it, with the precompile hint."""
+    (root / "transforms/pt_rewrite.erl").write_text("-module(pt_rewrite).\nparse_transform(F, _) -> F\n",
+                                                     encoding="utf-8")
+    result = run([tool, "--erl", erl, "--project", "project.toml"], root)
+    hint = "precompile it into a .beam with the host Erlang/OTP and pass its directory with --transform-path"
+    if result.returncode != 1 or "pt_rewrite.erl" not in result.stderr or hint not in result.stderr:
+        return [f"broken transform: exit {result.returncode}\n{result.stderr}"]
+    return []
+
+
+def precompiled(tool, erl, root, fixtures):
+    """With the broken source still there, a precompiled pt_rewrite.beam on a transform path wins."""
+    ebin = root / "deps/ptdep/ebin"
+    erlc = pathlib.Path(erl).with_name("erlc" + pathlib.Path(erl).suffix)
+    sources = [fixtures / "project/transforms/pt_rewrite.erl", fixtures / "project/transforms/pt_helper.erl"]
+    built = run([erlc, "-o", ebin] + sources, root)
+    if built.returncode != 0:
+        return [f"erlc failed\n{built.stdout}{built.stderr}"]
+    return program(tool, erl, root)
+
+
+def main():
+    tool, erl, fixtures, work = sys.argv[1:]
+    if erl == "-":
+        print("SKIP: no host Erlang/OTP")
+        return
+    tool, fixtures, work = (pathlib.Path(item).resolve() for item in (tool, fixtures, work))
+    work.mkdir(parents=True, exist_ok=True)
+    root, failures = prepare(erl, fixtures, work)
+    if not failures:
+        failures = program(tool, erl, root) + broken(tool, erl, root) + precompiled(tool, erl, root, fixtures)
+    if failures:
+        print("\n".join(failures), file=sys.stderr)
+        sys.exit(1)
+    print("transforms_project: ok")
+
+
+if __name__ == "__main__":
+    main()

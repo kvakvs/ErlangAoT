@@ -28,6 +28,9 @@ struct PlannedTarget {
     std::optional<SelectedEntry> entry;
     // Expanded source_search_paths, also searched for a module the batch names but no source defines.
     std::vector<std::filesystem::path> search_paths_ = {};
+    // The target's parse transforms and expanded transform_paths. Added for parse transforms.
+    std::vector<std::string> transforms_ = {};
+    std::vector<std::filesystem::path> transform_paths_ = {};
 };
 
 struct Invocation {

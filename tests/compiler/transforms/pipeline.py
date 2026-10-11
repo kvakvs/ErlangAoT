@@ -31,6 +31,15 @@ def without_otp(tool, fixtures, work):
     return []
 
 
+def missing_path(tool, fixtures, work):
+    """A transform path that does not exist is reported before any host code runs."""
+    result = run([tool, "--erl", "none", "--transform-path", work / "missing", fixtures / "pipeline/tagged_user.erl"],
+                 work)
+    if result.returncode != 1 or "parse transform path is not a directory" not in result.stderr:
+        return [f"missing path: exit {result.returncode}\n{result.stderr}"]
+    return []
+
+
 def compile_transforms(erl, fixtures, ebin):
     """Precompile the owned transforms with the host OTP into one code path directory."""
     ebin.mkdir(parents=True, exist_ok=True)
@@ -67,6 +76,11 @@ def reported(tool, erl, fixtures, work):
     printed = run(base + ["--print-abstr", "tagged_user.erl"], directory)
     if printed.returncode != 0 or "{function,8,tagged,0," not in printed.stdout:
         failures.append(f"--print-abstr: exit {printed.returncode}\n{printed.stdout}{printed.stderr}")
+    # A .beam on a transform path that does not load is named.
+    (work / "ebin/pt_corrupt.beam").write_bytes(b"not a beam file")
+    corrupt = run(base + ["--parse-transform", "pt_corrupt", "cli_user.erl"], directory)
+    if corrupt.returncode != 1 or "cannot load parse transform 'pt_corrupt' from" not in corrupt.stderr:
+        failures.append(f"corrupt beam: exit {corrupt.returncode}\n{corrupt.stderr}")
     return failures
 
 
@@ -75,7 +89,7 @@ def main():
     tool, fixtures, work = (pathlib.Path(item).resolve() for item in (tool, fixtures, work))
     work.mkdir(parents=True, exist_ok=True)
     if mode == "none":
-        failures = without_otp(tool, fixtures, work)
+        failures = without_otp(tool, fixtures, work) + missing_path(tool, fixtures, work)
     elif erl == "-":
         print("SKIP: no host Erlang/OTP")
         return

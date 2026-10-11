@@ -67,8 +67,7 @@ transform([Transform | Rest], Forms0, Options, File, Warnings) ->
             erlang:function_exported(Transform, parse_transform, 2)
     of
         false ->
-            Error = {File, none, compile_error({undef_parse_transform, Transform})},
-            {error, [Error], Warnings};
+            {error, [{File, none, unavailable(Transform)}], Warnings};
         true ->
             Forms = maybe_strip_columns(Forms0, Transform, Options),
             try Transform:parse_transform(Forms, Options) of
@@ -88,6 +87,15 @@ transform([Transform | Rest], Forms0, Options, File, Warnings) ->
     end;
 transform([], Forms, Options, _File, Warnings) ->
     {ok, strip_columns_if(Forms, option_location(Options) =:= line), Warnings}.
+
+%% Why a transform cannot run: a .beam on the code path that does not load is named, else OTP's undefined text.
+unavailable(Transform) ->
+    case {code:ensure_loaded(Transform), code:where_is_file(atom_to_list(Transform) ++ ".beam")} of
+        {{error, Reason}, Path} when is_list(Path) ->
+            text("cannot load parse transform '~ts' from ~ts: ~tp", [Transform, Path, Reason]);
+        _ ->
+            compile_error({undef_parse_transform, Transform})
+    end.
 
 %% compile:maybe_strip_columns/3: columns go when the transform or the options ask for line locations.
 maybe_strip_columns(Forms, Transform, Options) ->

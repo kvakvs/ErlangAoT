@@ -33,6 +33,10 @@ struct TargetOptions {
     std::vector<Text> disable_features;
     // Map include_lib application names to explicitly located roots.
     std::map<std::string, Text> applications;
+    // Parse transforms applied to every module of the target, and directories (or patterns) of precompiled
+    // transform modules (docs/transforms.md). Added for parse transforms.
+    std::vector<Text> parse_transforms;
+    std::vector<Text> transform_paths;
 };
 
 struct Target {

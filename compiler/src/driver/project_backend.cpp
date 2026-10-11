@@ -151,6 +151,10 @@ int run_project(const Options &options, const std::span<char *const> arguments) 
         request.print_source = options.print_source;
         request.print_abstr = options.print_abstr;
         request.transforms_ = options.transforms;
+        for (const auto &name : target.transforms_) {
+            request.transforms_.transforms_.push_back(Source(0, "module", name).text);
+        }
+        std::ranges::copy(target.transform_paths_, std::back_inserter(request.transforms_.code_paths_));
         request.executable_output = target.output;
         request.create_output_directory = !options.output_explicit;
         request.entry = target.entry;

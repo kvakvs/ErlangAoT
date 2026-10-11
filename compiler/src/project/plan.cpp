@@ -77,6 +77,19 @@ void outputs(const Invocation &invocation) {
         }
     }
 }
+
+// The target's parse transforms and transform_paths, patterns expanded like source_search_paths. Added for parse
+// transforms.
+void transform_options(const std::filesystem::path &base, const Target &target, const DiscoveryLimits limits,
+                       PlannedTarget &planned) {
+    for (const auto &name : target.options.parse_transforms) {
+        planned.transforms_.push_back(name.value);
+    }
+    for (const auto &pattern : target.options.transform_paths) {
+        const auto directories = pattern_directories(base, pattern, "transform path", limits);
+        planned.transform_paths_.insert(planned.transform_paths_.end(), directories.begin(), directories.end());
+    }
+}
 } // namespace
 
 Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
@@ -100,6 +113,7 @@ Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
                                   compose_options(target, base, options.working_directory, options.preprocessing),
                                   output_path(target, options, base), entry_selection(target, options),
                                   std::move(search)});
+        transform_options(base, target, options.discovery, result.targets.back());
     }
     outputs(result);
     return result;

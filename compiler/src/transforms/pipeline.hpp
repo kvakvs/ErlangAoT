@@ -11,8 +11,9 @@ struct TransformSettings {
     std::optional<std::filesystem::path> erl_;
     std::vector<std::u32string> transforms_;
     std::vector<std::filesystem::path> code_paths_;
-    // The source of a project transform module by name, compiled by the loader when no .beam precedes it.
-    std::function<std::optional<std::filesystem::path>(const std::u32string &)> find_source_;
+    // The sources of a project transform module and of the project modules it calls, by module name; the loader
+    // compiles them when no .beam on the code paths precedes them.
+    std::function<std::vector<std::filesystem::path>(const std::u32string &)> find_sources_;
 };
 
 // Whether a parsed module needs parse transforms: the settings name some, or one of its -compile attributes does.

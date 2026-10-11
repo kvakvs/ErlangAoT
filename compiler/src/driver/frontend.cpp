@@ -8,6 +8,7 @@
 #include "escript.hpp"
 #include "options.hpp"
 #include "predefined.hpp"
+#include "transform_sources.hpp"
 #include "transforms/abstract_input.hpp"
 #include "transforms/export.hpp"
 #include <algorithm>
@@ -340,8 +341,14 @@ void list_batch(const std::span<const std::filesystem::path> paths, const Discov
 }
 } // namespace
 
-bool process_files(const std::span<const std::filesystem::path> paths, const FrontendRequest &request,
+bool process_files(const std::span<const std::filesystem::path> paths, const FrontendRequest &shared,
                    const DiagnosticSink &sink) {
+    // Project transform modules come from the batch and its search directories. Added for parse transforms.
+    auto request = shared;
+    request.transforms_.find_sources_ = [paths, &shared](const std::u32string &module) {
+        return transform_sources(module, {.inputs_ = paths, .directories_ = shared.module_search_paths_},
+                                 shared.preprocessing);
+    };
     Inputs inputs;
     if (request.compile && paths.size() > codegen::CompilationLimits{}.modules) {
         sink("error: compilation module count limit exceeded");

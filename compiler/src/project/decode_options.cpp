@@ -36,10 +36,10 @@ void check_features(const TargetOptions &options) {
 
 TargetOptions decode_options(const toml::node &node, const schema::Context &context) {
     const auto &values = schema::table(node, context, "options");
-    schema::keys(
-        values,
-        {"source_search_paths", "include_dirs", "defines", "enable_features", "disable_features", "applications"},
-        context);
+    schema::keys(values,
+                 {"source_search_paths", "include_dirs", "defines", "enable_features", "disable_features",
+                  "applications", "parse_transforms", "transform_paths"},
+                 context);
     TargetOptions result;
     result.source_search_paths = schema::strings(values, "source_search_paths", context);
     result.include_dirs = schema::strings(values, "include_dirs", context);
@@ -47,6 +47,8 @@ TargetOptions decode_options(const toml::node &node, const schema::Context &cont
     result.enable_features = schema::strings(values, "enable_features", context);
     result.disable_features = schema::strings(values, "disable_features", context);
     result.applications = applications(values, context);
+    result.parse_transforms = schema::strings(values, "parse_transforms", context);
+    result.transform_paths = schema::strings(values, "transform_paths", context);
     check_features(result);
     return result;
 }
