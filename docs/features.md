@@ -27,11 +27,11 @@ or refine an entry when its feature lands; keep its ID reserved.
   omits unknown context, escapes control bytes as `\xHH` and escapes quotes and
   backslashes so context cannot inject lines. UTF-8 is kept.
 - Exactly one message per failed operation, independent of `--verbose`.
-- A deferred feature the compiler can skip without changing what it accepts
-  reports as a warning and compilation continues: `parse transforms`
-  (`-compile({parse_transform, Module})` is not applied; the contract that
-  replaces this warning is [transforms](transforms.md)). `codegen_placeholders`
-  checks one message per deferred compiler feature either way.
+- A deferred feature the compiler could skip without changing what it accepts
+  would report as a warning and compilation would continue; none does today
+  (`parse transforms` did until plan step 73F applied them, see
+  [transforms](transforms.md)). `codegen_placeholders` checks one message per
+  deferred compiler feature.
 - Compiler: [reject_feature](../compiler/src/codegen/features.hpp) reports the
   first failure of a batch, latches failure, discards staged output and marks the
   diagnostic `reported` so drivers do not print it again.

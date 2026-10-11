@@ -238,14 +238,14 @@ inline constexpr std::array feature_catalog{
                 .status = FeatureStatus::implemented,
                 .plan_step = 57,
                 .failure_test = "executables_port_identities"},
-    // -compile({parse_transform, Module}) is accepted with a warning and not applied (user direction 2026-10-10).
+    // Parse transforms run on the host Erlang/OTP through the loader (plan steps 73A-73G, docs/transforms.md).
     FeatureInfo{.id = FeatureId::parse_transforms,
                 .name = "parse transforms",
                 .owner = FeatureOwner::compiler,
-                .boundary = "-compile option analysis (warning, not applied)",
-                .status = FeatureStatus::deferred,
+                .boundary = "host OTP transform loader",
+                .status = FeatureStatus::implemented,
                 .plan_step = 73,
-                .failure_test = "frontend_cli"},
+                .failure_test = "transforms_pipeline"},
 
 };
 

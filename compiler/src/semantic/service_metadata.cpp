@@ -29,7 +29,7 @@ bool warning_option(const std::u32string_view name) {
     return name.starts_with(U"nowarn_") || name.starts_with(U"warn_");
 }
 
-// {parse_transform, Module} is accepted but not applied; check_capabilities warns about it.
+// {parse_transform, Module} options are applied before analysis (docs/transforms.md); here they are inert.
 bool parse_transform(const ast::Module &syntax, const ast::TermTuple &tuple) {
     const auto *name =
         tuple.elements.size() == 2 ? std::get_if<ast::Atom>(&syntax.term(tuple.elements[0]).value) : nullptr;
@@ -86,22 +86,6 @@ std::optional<ast::TermId> rejected_option(const ast::Module &syntax, const ast:
     return std::nullopt;
 }
 
-// The options of one -compile value, nested lists flattened.
-std::vector<ast::TermId> flattened(const ast::Module &syntax, const ast::TermId &root) {
-    std::vector<ast::TermId> result;
-    std::vector<ast::TermId> pending{root};
-    while (!pending.empty()) {
-        auto id = pending.back();
-        pending.pop_back();
-        if (const auto *list = std::get_if<ast::TermList>(&syntax.term(id).value)) {
-            pending.insert(pending.end(), list->elements.rbegin(), list->elements.rend());
-        } else {
-            result.push_back(id);
-        }
-    }
-    return result;
-}
-
 // What a rejected generic attribute does: the offending -compile option, or the attribute itself.
 std::optional<std::string> rejected_generic(const ast::Module &syntax, const ast::GenericAttribute &attribute) {
     if (attribute.name.name != U"compile") {
@@ -111,21 +95,6 @@ std::optional<std::string> rejected_generic(const ast::Module &syntax, const ast
     return option ? std::optional{"-compile option " + term_source(syntax, *option)} : std::nullopt;
 }
 } // namespace
-
-std::vector<std::string> parse_transforms(const ast::Module &syntax, const ast::FormValue &value) {
-    const auto *attribute = std::get_if<ast::GenericAttribute>(&value);
-    if (!attribute || attribute->name.name != U"compile") {
-        return {};
-    }
-    std::vector<std::string> result;
-    for (const auto &option : flattened(syntax, attribute->value)) {
-        const auto *tuple = std::get_if<ast::TermTuple>(&syntax.term(option).value);
-        if (tuple && parse_transform(syntax, *tuple)) {
-            result.push_back("-compile option " + term_source(syntax, option));
-        }
-    }
-    return result;
-}
 
 std::optional<std::string> rejected_attribute(const ast::Module &syntax, const ast::FormValue &value) {
     if (const auto *attribute = std::get_if<ast::GenericAttribute>(&value)) {

@@ -201,6 +201,9 @@ void parse_reply(const std::string &bytes, TransformReply &reply) {
 } // namespace
 
 std::optional<fs::path> find_erl(const std::optional<fs::path> &explicit_path) {
+    if (explicit_path && *explicit_path == "none") {
+        return std::nullopt;
+    }
     if (explicit_path) {
         if (llvm::sys::fs::can_execute(text(*explicit_path))) {
             return explicit_path;

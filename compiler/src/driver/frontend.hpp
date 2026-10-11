@@ -1,6 +1,7 @@
 #pragma once
 #include "backend_options.hpp"
 #include "project/entry.hpp"
+#include "transforms/pipeline.hpp"
 #include <clause/compiler/diagnostic.hpp>
 #include <clause/compiler/preprocessor.hpp>
 #include <functional>
@@ -34,6 +35,8 @@ struct FrontendRequest {
     bool print_source = false;
     // Print each parsed module as abstract format forms (--print-abstr). Added for parse transforms.
     bool print_abstr = false;
+    // Parse transforms settings: host erl, extra transforms, precompiled module paths. Added for parse transforms.
+    transforms::TransformSettings transforms_ = {};
     // Executable destination (--output or a project target's output); present only when linking is requested.
     std::optional<std::filesystem::path> executable_output = {};
     // Create a missing executable directory; set for manifest outputs, never for an explicit --output.

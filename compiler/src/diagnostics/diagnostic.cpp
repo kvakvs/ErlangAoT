@@ -14,9 +14,10 @@ std::string render(const Diagnostic &diagnostic) {
     const auto position = span.source->position(span.begin);
     const auto location =
         diagnostic.location.value_or(LogicalLocation{span.source->name, position.line, position.column});
-    // Column 0 means a line-only location, as abstract format annotations without columns give.
+    // Column 0 means a line-only location, as abstract format annotations without columns give; line 0 a file.
     const auto column = location.column == 0 ? std::string() : ':' + std::to_string(location.column);
-    auto result = location.file + ':' + std::to_string(location.line) + column + ": " + diagnostic.message;
+    const auto line = location.line == 0 ? std::string() : ':' + std::to_string(location.line) + column;
+    auto result = location.file + line + ": " + diagnostic.message;
     if (diagnostic.opener) {
         const auto &open = *diagnostic.opener;
         result += "\n  construct opened at " + open.file + ':' + std::to_string(open.line) + ':' +

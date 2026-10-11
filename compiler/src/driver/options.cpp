@@ -87,6 +87,27 @@ static std::optional<std::string> parse_entry_option(std::span<char *> &remainin
     return std::nullopt;
 }
 
+// Consume --parse-transform MODULE, --transform-path DIR or --erl PATH. Added for parse transforms.
+static std::optional<std::string> parse_transform_option(const std::string_view argument, std::span<char *> &remaining,
+                                                         Options &options) {
+    if (remaining.empty() || std::string_view(remaining.front()).empty()) {
+        return "expected a value after " + std::string(argument);
+    }
+    const std::string value = remaining.front();
+    remaining = remaining.subspan(1);
+    auto &settings = options.transforms;
+    if (argument == "--parse-transform") {
+        settings.transforms_.push_back(Source(0, "module", value).text);
+    } else if (argument == "--transform-path") {
+        settings.code_paths_.emplace_back(value);
+    } else if (settings.erl_) {
+        return "--erl specified more than once";
+    } else {
+        settings.erl_ = value;
+    }
+    return std::nullopt;
+}
+
 namespace {
 struct Flag {
     // Map a flag to its destination and whether it requests frontend processing.
@@ -129,6 +150,9 @@ static std::optional<std::string> parse_option(const std::string_view argument, 
     }
     if (argument == "--entry") {
         return parse_entry_option(remaining, options);
+    }
+    if (argument == "--parse-transform" || argument == "--transform-path" || argument == "--erl") {
+        return parse_transform_option(argument, remaining, options);
     }
     if (is_backend_option(argument)) {
         return parse_backend_option(argument, remaining, options.backend);

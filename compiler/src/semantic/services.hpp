@@ -40,6 +40,4 @@ void resolve_services(Module &module, const Reporter &out, std::size_t work_limi
 // What a form the capability check flags would change, named for the diagnostic (`-on_load attribute`, `-compile
 // option {parse_transform,m}`); empty for a -compile whose options are all inert.
 std::optional<std::string> rejected_attribute(const ast::Module &syntax, const ast::FormValue &value);
-// The -compile {parse_transform, Module} options of a form, named for the warning: accepted, not applied.
-std::vector<std::string> parse_transforms(const ast::Module &syntax, const ast::FormValue &value);
 } // namespace clause::semantic

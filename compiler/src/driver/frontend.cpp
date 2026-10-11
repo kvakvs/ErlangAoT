@@ -121,11 +121,58 @@ bool finish_module(ParserSession &parser, const ParsedModule &parsed, const Fron
     return false;
 }
 
+// Whether the request's action sees modules after their parse transforms (docs/transforms.md#clause-pipeline).
+// Added for parse transforms.
+bool transforming(const FrontendRequest &request) {
+    return request.compile || request.print_ast || request.print_source || request.print_abstr;
+}
+
+// The compile options a transform receives for this request. Added for parse transforms.
+transforms::CompileOptions compile_options(const FrontendRequest &request, const FeatureSnapshot &features) {
+    return {.features_ = features ? features->enabled : std::vector<std::string>{},
+            .includes_ = request.preprocessing.include_paths,
+            .defines_ = request.preprocessing.definitions,
+            .transforms_ = request.transforms_.transforms_};
+}
+
+// Parse transforms run on a module that parsed without errors; the forms they return replace its syntax.
+// Added for parse transforms.
+bool transform_and_finish(ParserSession &parser, PreprocessorSession &session, const FrontendRequest &request,
+                          const DiagnosticSink &sink, const SourcePtr &source, const std::filesystem::path &path,
+                          const bool escript, Inputs &inputs) {
+    const auto features = session.features();
+    auto parsed = std::move(parser).finish(features);
+    for (const auto &diagnostic : parsed.diagnostics) {
+        print_diagnostic(diagnostic, sink);
+    }
+    if (parsed.failed || session.failed()) {
+        return true;
+    }
+    ParserSession transformed;
+    const auto outcome = transforms::transform_module(parsed.module, *source, request.transforms_,
+                                                      compile_options(request, features), features, transformed);
+    if (!outcome.output_.empty()) {
+        std::cerr << outcome.output_;
+    }
+    for (const auto &diagnostic : outcome.diagnostics_) {
+        print_diagnostic(diagnostic, sink);
+    }
+    if (outcome.failed_) {
+        return true;
+    }
+    const auto end = [position = outcome.end_](const ast::Module &) { return position; };
+    return finish_module(transformed, {features, false, end}, request, sink, path, escript, inputs);
+}
+
 // Consume a preprocessing session as one module.
 bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
                      const SourcePtr &source, const std::filesystem::path &path, const bool escript, Inputs &inputs) {
     ParserSession parser;
     parse_events(session, request, parser);
+    if (transforming(request) && !parser.stopped() &&
+        transforms::wants_transforms(parser.view(), request.transforms_)) {
+        return transform_and_finish(parser, session, request, sink, source, path, escript, inputs);
+    }
     const auto end = [&source](const ast::Module &module) {
         return transforms::end_of(module, module.forms(), *source);
     };
@@ -327,6 +374,7 @@ int process_inputs(const Options &options) {
     request.list_inputs = options.print_inputs; // Added for --print-inputs.
     request.print_source = options.print_source;
     request.print_abstr = options.print_abstr;
+    request.transforms_ = options.transforms;
     if (options.output_explicit) {
         request.executable_output = options.output;
     }

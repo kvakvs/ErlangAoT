@@ -35,7 +35,7 @@ add_library(clause_transforms STATIC src/transforms/terms.cpp src/transforms/etf
     src/transforms/export_forms.cpp src/transforms/export_types.cpp src/transforms/import.cpp
     src/transforms/import_expressions.cpp src/transforms/import_control.cpp src/transforms/import_forms.cpp
     src/transforms/import_types.cpp src/transforms/abstract_input.cpp src/transforms/annotations.cpp
-    src/transforms/loader.cpp)
+    src/transforms/loader.cpp src/transforms/pipeline.cpp)
 clause_project_options(clause_transforms)
 target_include_directories(clause_transforms PRIVATE src)
 target_link_libraries(clause_transforms PUBLIC clause_frontend PRIVATE clause_multiprecision_dependency clause_abi

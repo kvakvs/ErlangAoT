@@ -2,6 +2,7 @@
 #include "backend_options.hpp"
 #include "project/cli.hpp"
 #include "project/entry.hpp"
+#include "transforms/pipeline.hpp"
 #include <clause/compiler/preprocessor.hpp>
 #include <span>
 
@@ -43,6 +44,8 @@ struct Options {
     bool print_inputs = false;
     // Request syntax diagnostics without requiring tree output.
     bool parse_check = false;
+    // --erl, --parse-transform and --transform-path (docs/transforms.md#options).
+    transforms::TransformSettings transforms;
     // Recreate preprocessing options independently for every input module.
     clause::PreprocessorOptions preprocessing;
 };

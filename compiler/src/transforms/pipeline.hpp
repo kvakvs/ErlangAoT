@@ -1,0 +1,34 @@
+#pragma once
+// Added for parse transforms: applying a module's parse transforms between parsing and analysis.
+#include "loader.hpp"
+#include <clause/compiler/parser.hpp>
+#include <functional>
+
+namespace clause::transforms {
+struct TransformSettings {
+    // --erl; transforms named by --parse-transform or the project, run before the module's own; directories of
+    // precompiled transform modules.
+    std::optional<std::filesystem::path> erl_;
+    std::vector<std::u32string> transforms_;
+    std::vector<std::filesystem::path> code_paths_;
+    // The source of a project transform module by name, compiled by the loader when no .beam precedes it.
+    std::function<std::optional<std::filesystem::path>(const std::u32string &)> find_source_;
+};
+
+// Whether a parsed module needs parse transforms: the settings name some, or one of its -compile attributes does.
+bool wants_transforms(const ast::Module &syntax, const TransformSettings &settings);
+
+struct TransformOutcome {
+    // Problems (including what transforms reported), the loader's own output, failure, and the result's eof.
+    std::vector<Diagnostic> diagnostics_;
+    std::string output_;
+    bool failed_ = false;
+    Position end_{};
+};
+
+// Run the module's transforms on the host OTP and parse the forms they return into `parser`, as erlc does
+// between epp and erl_lint; `main` is the module's main source.
+TransformOutcome transform_module(const ast::Module &syntax, const Source &main, const TransformSettings &settings,
+                                  const CompileOptions &options, const FeatureSnapshot &features,
+                                  const ParserSession &parser);
+} // namespace clause::transforms

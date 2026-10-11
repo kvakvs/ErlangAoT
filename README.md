@@ -33,6 +33,8 @@ a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
   [executables](docs/executables.md).
 - TOML projects with named targets, source discovery, per-target frontend options,
   and annotated starter files.
+- Parse transforms (`-compile({parse_transform, M})`), run on an Erlang/OTP 29
+  installed on the host while compiling; see [Parse transforms](#parse-transforms).
 
 ## Build
 
@@ -277,6 +279,9 @@ clau [options] <source.erl>...
   --print-ast              Print an indented syntax tree
   --print-source           Print each module as Erlang source
   --print-abstr            Print each module as OTP abstract format forms
+  --parse-transform <mod>  Apply a parse transform to every module
+  --transform-path <dir>   Directory of precompiled transform modules (.beam)
+  --erl <path|none>        Host Erlang/OTP 29 erl that runs parse transforms
   --print-inputs           List the batch's sources, including modules added by reference; do not compile
   --print-env              Print the resolved compile environment as TOML and exit
   --print-types            Print each module as source annotated with inferred types
@@ -353,6 +358,28 @@ without `-o` writes no executable.
 
 See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
 [validation status](docs/validation.md) for further details.
+
+## Parse transforms
+
+A module that names a parse transform (`-compile({parse_transform, M})`, or
+`--parse-transform M` for every module) is compiled with the transform applied,
+as `erlc` would: Clause hands its forms to `M:parse_transform/2` running on an
+Erlang/OTP 29 installed on the host and compiles what comes back. OTP is needed
+only while compiling such modules; the executables never need it.
+
+```sh
+# erl on PATH (or the default Windows installation) is found automatically.
+clau -o app src/app.erl
+# Choose the host OTP, and where precompiled transform modules (.beam) live.
+clau --erl /usr/local/lib/erlang/bin/erl --transform-path deps/lager/ebin -o app src/app.erl
+# See what the transforms produced, as erlc +to_abstr writes it.
+clau --print-abstr src/app.erl
+```
+
+OTP's own transforms (`ms_transform`, `qlc`) work as they are; transforms from
+other libraries must be compiled into `.beam` files with the host OTP first.
+See [parse transforms](docs/transforms.md) for lookup order, options and
+messages.
 
 ## Projects
 

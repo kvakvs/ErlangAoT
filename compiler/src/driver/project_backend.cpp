@@ -150,6 +150,7 @@ int run_project(const Options &options, const std::span<char *const> arguments) 
         request.project_target = target.name;
         request.print_source = options.print_source;
         request.print_abstr = options.print_abstr;
+        request.transforms_ = options.transforms;
         request.executable_output = target.output;
         request.create_output_directory = !options.output_explicit;
         request.entry = target.entry;

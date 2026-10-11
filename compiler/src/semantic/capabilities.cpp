@@ -8,7 +8,7 @@
 
 namespace clause::semantic {
 namespace {
-// Attributes that would change semantics (on_load, nifs, parse transforms, module parameters) stay rejected.
+// Attributes that would change semantics (on_load, nifs, module parameters) stay rejected.
 struct FormCapability {
     std::string_view operator()(const ast::ModuleAttribute &value) const {
         return value.parameters ? "behavior-changing attributes" : "";
@@ -246,9 +246,6 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
         const auto rejected = reason.empty() ? std::nullopt : rejected_attribute(*module.syntax, form.value);
         if (rejected) {
             reject_capability(module, form.source, reason, out, *rejected);
-        }
-        for (const auto &transform : parse_transforms(*module.syntax, form.value)) {
-            reject_capability(module, form.source, "parse transforms", out, transform, Severity::warning);
         }
         if (const auto *value = std::get_if<ast::Function>(&form.value)) {
             const auto key = FunctionKey{value->name.name, value->clauses.at(0).arguments.size()};

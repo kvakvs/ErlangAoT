@@ -12,7 +12,6 @@ CASES = {
 }
 # Deferred features that only warn: compilation continues without them.
 WARNINGS = {
-    "parse transforms": "-compile({parse_transform, x}). f() -> 1.",
 }
 
 

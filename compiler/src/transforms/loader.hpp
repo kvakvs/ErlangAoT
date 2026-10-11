@@ -12,7 +12,8 @@ class LoaderError : public std::runtime_error {
     explicit LoaderError(const std::string &message) : std::runtime_error(message) {}
 };
 
-// Find the host erl: an explicit path (must be executable), else erl on PATH, else the Windows default install.
+// Find the host erl: an explicit path (must be executable; `none` means no host OTP), else erl on PATH, else the
+// Windows default install.
 std::optional<std::filesystem::path> find_erl(const std::optional<std::filesystem::path> &explicit_path);
 
 // The compile options a transform receives, as erlc would pass them.

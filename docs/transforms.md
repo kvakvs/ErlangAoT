@@ -1,5 +1,28 @@
 # Parse transforms
 
+## Using parse transforms
+
+- **Requirement:** Erlang/OTP 29 installed on the host, only for compiling
+  modules that use a transform. `clau` takes `--erl PATH`, else `erl` on
+  `PATH`, else on Windows `%ProgramFiles%\Erlang OTP\bin\erl.exe`.
+  `--erl none` never runs host code: modules that need a transform fail.
+- **Invoke a transform** in the source with
+  `-compile({parse_transform, Module}).` (or inside a `-compile([...])` list),
+  or for every module of the command with `--parse-transform Module`
+  (repeatable; these run first, like `erlc +'{parse_transform,M}'`).
+- **Transform modules** are found as `.beam` files in `--transform-path`
+  directories (repeatable), then among OTP's modules (`ms_transform`, `qlc`).
+  A transform from another library must be compiled with the host OTP first,
+  for example `erlc -o deps/lib/ebin deps/lib/src/*.erl`, and its `ebin`
+  directory passed with `--transform-path`.
+- **What runs it:** compiling, `--print-ast`, `--print-source` and
+  `--print-abstr` (which shows the transformed forms); `--parse-check`,
+  `--preprocess-check` and `--print-pp` do not.
+
+```sh
+clau --erl "C:/Program Files/Erlang OTP/bin/erl.exe" --transform-path ebin -o app app.erl
+```
+
 Clause applies `{parse_transform, Module}` the way `erlc` does. It exports the
 parsed module as OTP [abstract format](https://www.erlang.org/doc/apps/erts/absform.html)
 forms, runs the transform module on an Erlang/OTP 29 installed on the host,
@@ -182,10 +205,11 @@ library modules Clause does not ship, so keep transforms out of a target's
 
 | Situation | Message |
 | --- | --- |
-| No host OTP | `parse transform 'M' needs Erlang/OTP 29 on the host; pass --erl` |
+| No host OTP | `File: parse transform 'M' needs Erlang/OTP 29 on the host; pass --erl` |
+| `--erl` names no executable | `File: erl not found: PATH` |
 | Wrong OTP release | `parse transforms need Erlang/OTP 29 on the host, found N` |
-| Transform not found | `undefined parse transform 'M'` (OTP's text) |
-| Transform raised | `error in parse transform 'M': ...` (OTP's text) |
+| Transform not found | `File: undefined parse transform 'M'` (OTP's text) |
+| Transform raised | `File: error in parse transform 'M': ...` (OTP's text) |
 | Transform warning or error | `File:Line:Column: Text` as returned |
 | Transform source does not compile | its messages, then the precompile hint |
 | Loader failed, timed out or wrote no reply | `parse transform loader failed: ...` |

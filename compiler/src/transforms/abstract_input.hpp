@@ -11,6 +11,9 @@ struct AbstractFile {
     Position end_{};
 };
 
+// A file named by imported forms, read when it exists so imported code keeps its debug lines; else null.
+SourcePtr existing_source(SourceManager &sources, const std::string &file);
+
 // Read a file of abstract format forms (file:consult syntax) and parse them into `parser` as one module; the
 // files named by its file attributes supply debug lines when they exist. Unreadable text throws TermError.
 AbstractFile parse_abstract_file(const std::filesystem::path &path, const PreprocessorOptions &options,

@@ -4,8 +4,6 @@
 #include "term_text.hpp"
 
 namespace clause::transforms {
-namespace {
-// A file named by an imported form, read when it exists so imported code keeps its debug lines.
 SourcePtr existing_source(SourceManager &sources, const std::string &file) {
     const std::filesystem::path path(std::u8string(file.begin(), file.end()));
     std::error_code error;
@@ -18,7 +16,6 @@ SourcePtr existing_source(SourceManager &sources, const std::string &file) {
         return nullptr;
     }
 }
-} // namespace
 
 AbstractFile parse_abstract_file(const std::filesystem::path &path, const PreprocessorOptions &options,
                                  const ParserSession &parser) {

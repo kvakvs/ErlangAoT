@@ -826,27 +826,43 @@ Backlog: D03. Depends on: [73B](#step-73b).
 Backlog: D03. Depends on: [73D](#step-73d), [73E](#step-73e).
 
 - Success criteria
-  - [ ] The driver collects transforms in OTP order (options, then
+  - [x] The driver collects transforms in OTP order (options, then
     `-compile` attributes), removes their options from the forms, exports,
     runs the loader once per module, imports the result and replaces the
     module's AST; predefined functions, lint and semantic analysis run on
     the transformed module. Modules without transforms are unchanged and
     never start OTP.
-  - [ ] Returned warnings and errors become Clause diagnostics at their
+  - [x] Returned warnings and errors become Clause diagnostics at their
     file and location, with OTP's `compile` wording for
     `undefined parse transform 'M'` and `error in parse transform 'M': ...`;
     `nowarn_*` and the 65C warning rules apply; the 65C `notimpl` warning is
     removed.
-  - [ ] `--print-abstr` now prints the post-transform forms, as `erlc +to_abstr` writes them.
-  - [ ] Positional and project drivers both apply transforms.
-  - [ ] User docs (`docs/transforms.md`, `docs/compile.md`, README) state
+  - [x] `--print-abstr` now prints the post-transform forms, as `erlc +to_abstr` writes them.
+  - [x] Positional and project drivers both apply transforms.
+  - [x] User docs (`docs/transforms.md`, `docs/compile.md`, README) state
     how to invoke a transform, the host OTP requirement and how `clau`
     finds it.
 - Tests
-  - [ ] OTP-requiring executable goldens: a module using `erl_id_trans`, and
-    `ets:fun2ms`/`dbg:fun2ms` through `ms_transform.hrl` printing the
-    produced match specification; stdout matches OTP.
-  - [ ] Lint goldens for transform-reported errors and warnings.
+  - [x] OTP-requiring executable goldens: owned transforms (OTP ships no
+    `erl_id_trans` module) from `-compile` and from `--parse-transform`, and
+    `ets:fun2ms` through `ms_transform` printing the produced match
+    specification; stdout matches OTP.
+  - [x] CLI checks for transform-reported errors and warnings (exact
+    stderr lines; no lint golden needed, these are not erl_lint messages).
+- Evidence (2026-10-11): `transforms_pipeline` (label `host_otp`) links
+  `ms_transform`, `-compile` and `--parse-transform` programs through
+  precompiled transforms on `--transform-path` and gets OTP 29.1.1's
+  stdout; checks `subject.erl:1:2: pt_warning says hello`,
+  `subject.erl:4:1: pt_error refuses`,
+  `undefined.erl: undefined parse transform 'no_such_transform'` and the
+  transformed forms in `--print-abstr`. `transforms_no_otp` checks the
+  error without a host OTP through `--erl none` (Windows re-sets
+  `ProgramFiles` in every process, so the environment cannot hide an
+  installed OTP). The 65C warning, its capability code and placeholder are
+  gone; feature 27 is implemented; the semantic `transform` case expects
+  either OTP outcome.
+  Gate: fresh fast CTest 241/242 (only the earlier `codegen_resource_cli`
+  failure); check-quality clean.
 
 <a id="step-73g"></a>
 

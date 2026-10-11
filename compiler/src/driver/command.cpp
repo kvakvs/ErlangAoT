@@ -34,6 +34,9 @@ Options:
       --print-ast        Parse and print an indented syntax tree to stdout.
       --print-source     Parse and print each module as Erlang source to stdout.
       --print-abstr      Parse and print each module as OTP abstract format forms (erlc +to_abstr) to stdout.
+      --parse-transform <module>  Apply a parse transform to every module, before its own -compile ones.
+      --transform-path <dir>  Look for precompiled transform modules (.beam) in a directory; repeatable.
+      --erl <path|none>  Host Erlang/OTP 29 erl that runs parse transforms (default: erl on PATH); none: never.
       --print-inputs     Parse the inputs, add the modules they name, print every source of the batch; do not compile.
       --print-env        Print the resolved compile environment as TOML and exit without processing sources.
   -I, --include <dir>  Add an include directory (last supplied is searched first).
@@ -43,7 +46,7 @@ Options:
       --disable-feature <name>  Disable an OTP 29.1 feature.
       --               Treat all remaining arguments as input paths.
 
-Checks do not validate semantics or run parse transforms.
+Checks do not validate semantics or run parse transforms; compiling and --print-ast/-source/-abstr do.
 --print-inputs replaces other check/print actions. It lists the inputs (project globs and source_search_paths
 resolved), then each module source found by name in source_search_paths or the library as
 <path> (referenced at <file>:<line>), naming where the batch first refers to that module.
