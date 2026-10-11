@@ -22,3 +22,19 @@ set_tests_properties(transforms_abstract PROPERTIES TIMEOUT 120 PASS_REGULAR_EXP
 add_test(NAME transforms_inputs COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/inputs.py"
     "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/transforms/inputs" "${CMAKE_CURRENT_BINARY_DIR}/inputs/$<CONFIG>")
 set_tests_properties(transforms_inputs PROPERTIES TIMEOUT 300 PASS_REGULAR_EXPRESSION "transforms_inputs: ok")
+
+# Added for parse transforms: the loader on the host Erlang/OTP. Tests labeled host_otp skip without one.
+find_program(CLAUSE_TEST_ERL erl HINTS "$ENV{ProgramFiles}/Erlang OTP/bin" DOC "Host Erlang/OTP 29 erl for parse transform tests")
+if(CLAUSE_TEST_ERL)
+    set(test_erl "${CLAUSE_TEST_ERL}")
+else()
+    set(test_erl "-")
+endif()
+add_executable(transforms_loader loader.cpp)
+clause_project_options(transforms_loader)
+target_include_directories(transforms_loader PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(transforms_loader PRIVATE clause_transforms)
+add_test(NAME transforms_loader
+    COMMAND transforms_loader "${test_erl}" "${PROJECT_SOURCE_DIR}/tests/fixtures/transforms/loader")
+set_tests_properties(transforms_loader PROPERTIES TIMEOUT 300 LABELS host_otp
+    PASS_REGULAR_EXPRESSION "transforms_loader: ok" SKIP_REGULAR_EXPRESSION "SKIP: no host Erlang/OTP")

@@ -790,23 +790,34 @@ Backlog: D03. Depends on: [73C](#step-73c).
 Backlog: D03. Depends on: [73B](#step-73b).
 
 - Success criteria
-  - [ ] Host OTP discovery and release check as decided in 73A
+  - [x] Host OTP discovery and release check as decided in 73A
     (`transforms/host_otp`), reusing the subprocess launching of
     `compiler/src/linking/`.
-  - [ ] An owned loader module (`compiler/src/transforms/loader/*.erl`,
+  - [x] An owned loader module (`compiler/src/transforms/loader/*.erl`,
     erlfmt-formatted, embedded in `clau`) reads the request (forms, options,
     ordered transform list, code paths), loads each transform, applies
     `parse_transform_info/0` column stripping, runs `parse_transform/2` in
     order and writes one result: forms plus warnings, errors plus warnings,
     `undefined parse transform`, or the class, reason and stack of a crash.
     Transform output on stdout/stderr reaches the user.
-  - [ ] Time limit, missing or broken host OTP, and a loader that exits
+  - [x] Time limit, missing or broken host OTP, and a loader that exits
     without a result are distinct diagnostics.
 - Tests
-  - [ ] OTP-requiring (labeled) loader tests through a CLI debug entry point
+  - [x] OTP-requiring (labeled) loader tests through a CLI debug entry point
     or 73F's pipeline: `erl_id_trans`, each return shape, crash, undefined
     module, line-only `parse_transform_info/0`.
-  - [ ] OTP-free: the no-host-OTP diagnostic.
+  - [x] OTP-free: the no-host-OTP diagnostic (lands with the CLI in 73F).
+- Evidence (2026-10-11): `transforms_loader` (label `host_otp`, skipped
+  when CMake finds no `erl`) drives the loader on OTP 29.1.1 with owned
+  transform fixtures compiled in memory: identity (forms unchanged),
+  `{warning, ...}` (text and location), `{error, ...}`, a crash
+  (`error in parse transform 'pt_crash'`), an undefined module,
+  `parse_transform_info/0` asking for lines (columns stripped), a source
+  that does not compile (compiler message plus the precompile hint) and a
+  missing explicit `erl`. OTP has no `erl_id_trans` module (example source
+  only), so an owned identity transform replaces it.
+  Gate: fresh fast CTest 239/240 (only the earlier `codegen_resource_cli`
+  failure; `transforms_loader` ran on the host OTP); check-quality clean.
 
 <a id="step-73f"></a>
 

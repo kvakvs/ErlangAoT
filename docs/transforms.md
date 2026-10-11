@@ -123,7 +123,7 @@ gives the same forms.
 - The host must run OTP 29 (`erlang:system_info(otp_release)`); another
   release is an error.
 - The [loader](#loader) runs as `erl -noshell -noinput -pa Dir ... -eval ...`
-  with a time limit of 600 s. Its stdout and stderr (including the
+  (code path directories made absolute) with a time limit of 600 s. Its stdout and stderr (including the
   transform's `io:format` output) are copied to `clau`'s stderr after it ends.
   A loader that exits without writing a reply, times out or cannot start is
   an error.
@@ -160,8 +160,8 @@ A transform module is looked up in this order:
    project's sources or its `source_search_paths`, compiled by the loader in
    memory with the project's include directories and defines, on every run.
    There is no cache; precompile a large transform to save that time.
-3. **OTP's own modules** (`ms_transform`, `qlc`, `erl_id_trans`) from the
-   host's code path. Their headers resolve as every `include_lib` does
+3. **OTP's own modules** (`ms_transform`, `qlc`) from the host's code path.
+   OTP ships `erl_id_trans` only as an example source, not as a module. Their headers resolve as every `include_lib` does
    ([preprocessor](preprocessor.md#compatibility-policies)): map the
    application, as in
    `--app-dir "stdlib=C:/Program Files/Erlang OTP/lib/stdlib-8.1"` for

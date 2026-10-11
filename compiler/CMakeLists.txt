@@ -34,10 +34,18 @@ add_library(clause_transforms STATIC src/transforms/terms.cpp src/transforms/etf
     src/transforms/export.cpp src/transforms/export_expressions.cpp src/transforms/export_control.cpp
     src/transforms/export_forms.cpp src/transforms/export_types.cpp src/transforms/import.cpp
     src/transforms/import_expressions.cpp src/transforms/import_control.cpp src/transforms/import_forms.cpp
-    src/transforms/import_types.cpp src/transforms/abstract_input.cpp src/transforms/annotations.cpp)
+    src/transforms/import_types.cpp src/transforms/abstract_input.cpp src/transforms/annotations.cpp
+    src/transforms/loader.cpp)
 clause_project_options(clause_transforms)
 target_include_directories(clause_transforms PRIVATE src)
-target_link_libraries(clause_transforms PUBLIC clause_frontend PRIVATE clause_multiprecision_dependency clause_abi)
+target_link_libraries(clause_transforms PUBLIC clause_frontend PRIVATE clause_multiprecision_dependency clause_abi
+    clause_llvm_sdk)
+# The loader module is embedded into clau; erl compiles it in memory on each run (docs/transforms.md#loader).
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/transforms/loader/clause_transform_loader.erl" LOADER_TEXT)
+configure_file(src/transforms/loader/loader_source.hpp.in
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/transforms/loader_source.hpp" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS src/transforms/loader/clause_transform_loader.erl)
+target_include_directories(clause_transforms PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 add_executable(clau src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
     src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/predefined.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp src/driver/environment.cpp)
