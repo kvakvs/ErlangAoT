@@ -72,6 +72,10 @@ void check_columns_and_sources(const std::filesystem::path &erl, const std::file
     require(lines.terms_.small_integer(first.at(1)).has_value(), "columns were not stripped for pt_lines");
     const auto broken = run_transforms(module, request(erl, fixtures, {U"pt_broken"}, {"pt_broken"}));
     require(!broken.ok_ && contains(broken.errors_, "precompile it into a .beam"), "broken source hint");
+    // A source of a sticky host module (kernel, stdlib, compiler) is skipped: the host's own module is used.
+    const auto sticky =
+        run_transforms(module, request(erl, fixtures, {U"pt_identity"}, {"sticky/lists", "pt_identity"}));
+    require(sticky.ok_, "a source of a sticky host module was compiled or reloaded");
     try {
         find_erl(fixtures / "no-such-erl.exe");
         require(false, "a missing explicit erl was accepted");

@@ -47,6 +47,18 @@ load_sources(Sources) ->
     lists:foreach(fun load_source/1, Sources).
 
 load_source({Path, Options}) ->
+    case host_sticky(list_to_atom(filename:basename(Path, ".erl"))) of
+        true -> ok;
+        false -> compile_source(Path, Options)
+    end.
+
+%% Modules of kernel, stdlib and compiler live in sticky directories and cannot be reloaded: a project source of
+%% one (such as OTP's own qlc_pt.erl on a search path) is not compiled, the host's module is used.
+host_sticky(Module) ->
+    _ = code:ensure_loaded(Module),
+    code:is_sticky(Module).
+
+compile_source(Path, Options) ->
     case compile:file(Path, [binary, return_errors, return_warnings | Options]) of
         {ok, Module, Binary, _Warnings} ->
             {module, Module} = code:load_binary(Module, Path, Binary);

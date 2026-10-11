@@ -191,6 +191,10 @@ A transform module is looked up in this order:
    include directories and defines on every run, together with the project
    modules it calls by name (found the same way). There is no cache;
    precompile a large transform to save that time.
+   Sources of modules the host loads from its sticky directories (`kernel`,
+   `stdlib`, `compiler`, such as `qlc_pt.erl` when OTP's sources are on a
+   search path) are not compiled: those cannot be reloaded, and the host's
+   own modules are used.
 3. **OTP's own modules** (`ms_transform`, `qlc`) from the host's code path.
    OTP ships `erl_id_trans` only as an example source, not as a module.
    Their headers resolve as every `include_lib` does
